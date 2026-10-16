@@ -1,0 +1,14 @@
+tt_hex,n,k,mode,verdict,cnf_sha16,drat_sha16,t_sec,note
+0x03de,4,7,validation,match,,,,expected tree=7 from census DP / certified n=4 chain
+0x0358,4,8,validation,match,,,,expected tree=8 from census DP / certified n=4 chain
+0x06b5,4,9,validation,match,,,,expected tree=9 from census DP / certified n=4 chain
+0x0000,4,0,validation,match,,,,expected tree=0 from census DP / certified n=4 chain
+0x0ff0,4,3,validation,match,,,,expected tree=3 from census DP / certified n=4 chain
+0xabfe03de,5,1,formula,s VERIFIED,705839047160f1c4,f6915c0abdee239e,0.0,UNSAT: no fan-out-1 formula with exactly k gates
+0xabfe03de,5,2,formula,s VERIFIED,114176e42be74e7c,e94a855d0652bd58,0.1,UNSAT: no fan-out-1 formula with exactly k gates
+0xabfe03de,5,3,formula,s VERIFIED,30d49d71ee7f4d0f,296a8e8a790c209d,0.3,UNSAT: no fan-out-1 formula with exactly k gates
+0xabfe03de,5,4,formula,s VERIFIED,d8a43491dd792e2c,f111ac46f45ff9cd,0.2,UNSAT: no fan-out-1 formula with exactly k gates
+0xabfe03de,5,5,formula,s VERIFIED,2f3009e21bd4086e,3624f5dcf40263e6,1.1,UNSAT: no fan-out-1 formula with exactly k gates
+0xabfe03de,5,6,formula,s VERIFIED,5d4115c7014d13b1,1c636ee98a7d67fc,4.6,UNSAT: no fan-out-1 formula with exactly k gates
+0xabfe03de,5,7,formula,s VERIFIED,175338c2e4b09ffb,8e9035ef8cfe506a,31.0,UNSAT: no fan-out-1 formula with exactly k gates
+0xabfe03de,5,8,formula,s VERIFIED,0cfc8cf0b2b03082,ac6af62bd04637e4,163.1,UNSAT: no fan-out-1 formula with exactly k gates

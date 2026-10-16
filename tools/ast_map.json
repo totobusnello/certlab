@@ -1,0 +1,330 @@
+{
+ "comment": "Provenance map for tools/ast_equal.py. Originals are located by basename + sha256 under --source-root; no path into the source tree is stored. Each patch replaces a pinned line range of the original before the comparison. Identifier renames are keyed by sha256(original identifier)[:16] and applied as a consistent alpha-renaming.",
+ "global_renames_sha16": {
+  "73e6bdcaad588be7": "_install_excepthook",
+  "1cc40893501a6a30": "previous",
+  "e103bf13e6d917d3": "exc_type",
+  "6adcc016448d707c": "exc_value",
+  "1c8c7da378271481": "_require",
+  "1572e4ba4a11acde": "drat_verify_detailed",
+  "2186f86eef40018b": "lines",
+  "cafc76d5b15a27c2": "verdict",
+  "1129e6f195d97e9e": "size"
+ },
+ "entries": [
+  {
+   "copy": "src/certlab/encoders/aig.py",
+   "original_basename": "aig_exact.py",
+   "original_sha256": "8707ea3ab52fb529729742364ed9e373cf7e2ef6dc81a2aecd0a265dd1264b92",
+   "patches": [
+    {
+     "start": 254,
+     "end": 254,
+     "old_sha256": "e1a1fb906b87d2ded792d3a7b35d20eed5eebb7fed56d0bfa69f4bee6ba28774",
+     "new": "            if len(sel) != 1:\n                raise ValueError(f\"gate {i}: selection is not unique ({len(sel)})\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 296,
+     "end": 296,
+     "old_sha256": "7c9163367f1f63690a2b54489716d1265945bdd98dbef721e638288fa7ea909a",
+     "new": "    if not verify_circuit(n, tt, gates, op):\n        raise RuntimeError(\"REJECTED: the circuit does not match the truth table\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    }
+   ]
+  },
+  {
+   "copy": "src/certlab/encoders/xag.py",
+   "original_basename": "xag_exact.py",
+   "original_sha256": "1ccd780f326220ae90ad50996d38604c6723cb253d6702724a2f58e0ca53bf55",
+   "patches": [
+    {
+     "start": 129,
+     "end": 129,
+     "old_sha256": "96cb82cb241903ca90917cef2a30a0cbf5effe1e145a3159c2f61fc9646e88bb",
+     "new": "            if len(sel) != 1:\n                raise ValueError(f\"gate {i}: {len(sel)} active options\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 183,
+     "end": 183,
+     "old_sha256": "c189e9182ed99830f0bc3df5e4242c0c35d333597ae1b54c24bd9dc06dac2373",
+     "new": "        if not verify_circuit(n, tt, gates, out_pol):\n            raise RuntimeError(\"SAT model does not simulate! encoding bug\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 185,
+     "end": 185,
+     "old_sha256": "2945ed1b3540106c44addaa046459967cd0a3590d20b935dc24fbf8034634123",
+     "new": "    if r.returncode != 20:\n        raise RuntimeError(f\"kissat rc={r.returncode}\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    }
+   ]
+  },
+  {
+   "copy": "src/certlab/encoders/mig.py",
+   "original_basename": "mig_exact.py",
+   "original_sha256": "fe77f3d7bfc565a99c019feb63879c9cbeec2fde2c1299135ce8e58f308efdc3",
+   "patches": [
+    {
+     "start": 136,
+     "end": 136,
+     "old_sha256": "201ad856da31553df60a388f94ccc23412b077533eb26205e683e5d51d40a514",
+     "new": "            if len(sel) != 1:\n                raise ValueError(f\"gate {i}: {len(sel)} active options\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 190,
+     "end": 190,
+     "old_sha256": "662501da8e42df773d5775c440f5ef88de9ad6633fd249ef0bdcec687bf953d2",
+     "new": "        if not verify_circuit(n, tt, gates, out_pol):\n            raise RuntimeError(\"SAT model does not simulate! bug\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 192,
+     "end": 192,
+     "old_sha256": "2945ed1b3540106c44addaa046459967cd0a3590d20b935dc24fbf8034634123",
+     "new": "    if r.returncode != 20:\n        raise RuntimeError(f\"kissat rc={r.returncode}\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    }
+   ]
+  },
+  {
+   "copy": "src/certlab/certify/zc_certify.py",
+   "original_basename": "zc_certify.py",
+   "original_sha256": "22b0fe00409b7aab88254386b3e737c36d54eb14faa3523c34b5e4f891e0cb45",
+   "patches": [
+    {
+     "start": 41,
+     "end": 42,
+     "old_sha256": "10f6edf2f1dca95c12c76e28cadedf4a7181f7c06928db7ef78465918847530f",
+     "new": "from certlab.encoders.aig import AIGEncoder, verify_circuit, trivial_opt  # noqa: E402",
+     "reason": "import: package import instead of sys.path.insert"
+    },
+    {
+     "start": 45,
+     "end": 45,
+     "old_sha256": "a43cfec1c4aead8843f0b48cd8a348c04ed1d1bc359b629f2692d955c8e2f49c",
+     "new": "CERTS = os.environ.get(\"CERTLAB_CERTS\", os.path.join(os.getcwd(), \"certlab_certs\"))",
+     "reason": "path: output/data location for an installed package instead of the research tree"
+    },
+    {
+     "start": 293,
+     "end": 293,
+     "old_sha256": "5a56fca6408defa0235a8c3e1a83eba93532e2e6001f0cfc6926c02f0435d11b",
+     "new": "    path = os.path.join(CERTS, \"zc_forced_witness.json\")",
+     "reason": "path: output/data location for an installed package instead of the research tree"
+    }
+   ]
+  },
+  {
+   "copy": "src/certlab/certify/forced_multi.py",
+   "original_basename": "n5_forced_test.py",
+   "original_sha256": "2e03676d7a5d9ca1ea4b5f4517352174940ec1808a0ab05839bfd21f678a0ea7",
+   "patches": [
+    {
+     "start": 18,
+     "end": 21,
+     "old_sha256": "42f843439ba25a0d762dea71600e81473a4dbd878221b1fc0a669abf45335a38",
+     "new": "from certlab.encoders.aig import AIGEncoder, verify_circuit  # noqa: E402\nfrom certlab.certify.zc_certify import write_cnf, kissat, drat_verify, sha16, CERTS  # noqa: E402",
+     "reason": "import: package import instead of sys.path.insert"
+    },
+    {
+     "start": 49,
+     "end": 49,
+     "old_sha256": "10bbfad1f3bfd49f3dd84e3a77d36bf5b2771f06120c6622b98054cbdece76c8",
+     "new": "    if n is None:\n        raise TypeError(\"build_amo_shared: n is required (pass n= explicitly; there is no module default)\")\n    nn = n",
+     "reason": "fix: n of build_amo_shared is required (was a silent module-level default of 5)"
+    },
+    {
+     "start": 201,
+     "end": 201,
+     "old_sha256": "0a81cfa8850948f473214a934e75301d70c08e60cd360b6bc1fa559bbae273b0",
+     "new": "    nvars, clauses = build_amo_shared(tt, opt, n=N)",
+     "reason": "fix: n of build_amo_shared is required (was a silent module-level default of 5)"
+    },
+    {
+     "start": 231,
+     "end": 233,
+     "old_sha256": "6fe2c4d09909c00742b34f4ae0ed3402c90e8185c23322db90f0450229ca2a00",
+     "new": "    print(f\"\\n  *** VERDICT [{tag}]: FORCED MULTIPLE RECONVERGENCE at n={N} \u2014 Z-like. \"\n          f\"The n = 4 phenomenon GENERALIZES (opt LB DRAT={ok_lb}, tree gap=1={tree_ok}, \"\n          f\"forced-multi DRAT={ver}). ***\")",
+     "reason": "scrub: internal identifier removed from a message"
+    }
+   ]
+  },
+  {
+   "copy": "src/certlab/certify/cert_nosb.py",
+   "original_basename": "cert_nosb.py",
+   "original_sha256": "42b4f8ea0c8ae51ea1ef57b43af5023d73d58bad77669d4bd04e3d3d08febb35",
+   "patches": [
+    {
+     "start": 10,
+     "end": 12,
+     "old_sha256": "9e027ec0d5c23d10a09d5268e2acb4a48c66a890548fa843bea0456c4bd37820",
+     "new": "from certlab.certify.forced_multi import build_amo_shared  # noqa\nfrom certlab.certify.zc_certify import write_cnf, drat_verify, sha16, CERTS  # noqa",
+     "reason": "import: package import instead of sys.path.insert"
+    },
+    {
+     "start": 23,
+     "end": 23,
+     "old_sha256": "9c857aa43f92349cff8179d01ee9c1f5cc1127018ca01efae4dfbd2a097b0aa3",
+     "new": "    for csv_path in glob.glob(os.path.join(CERTS, \"*.csv\")):",
+     "reason": "path: output/data location for an installed package instead of the research tree"
+    },
+    {
+     "start": 38,
+     "end": 38,
+     "old_sha256": "a4ebe439d4535c788e9b27f4b83b136ee8d09fcf0e2ae90c67f907f7b68402a5",
+     "new": "    nv, cl = build_amo_shared(tt, opt, gate_order_b=False, n=5)   # VETTED encoder, NO symmetry break",
+     "reason": "fix: n of build_amo_shared is required (was a silent module-level default of 5)"
+    }
+   ]
+  },
+  {
+   "copy": "src/certlab/npn.py",
+   "original_basename": "npn_canon.py",
+   "original_sha256": "087c7f4dd200c9c2d3d7dc2f3aa61f5ce0c6b14ed29423cf1a5c86bcfc9c1ee8",
+   "patches": [
+    {
+     "start": 21,
+     "end": 21,
+     "old_sha256": "ae749a81d0e9de28a04dffde771186f6e32bab270b494a5a1dd1afaa24770f75",
+     "new": "CENSUS_CSV = os.environ.get(\"CERTLAB_NPN4_CSV\", os.path.join(HERE, \"..\", \"..\", \"data\", \"npn4\", \"npn4_opt_aig.csv\"))",
+     "reason": "path: output/data location for an installed package instead of the research tree"
+    },
+    {
+     "start": 82,
+     "end": 82,
+     "old_sha256": "ba9e2bbde924236b5d27cfa6a49f37cec4c1900cdbb865e16b9295301d0065be",
+     "new": "        if r[\"status\"] != \"exact\":\n            raise ValueError(f\"non-exact row in the census: {r}\")",
+     "reason": "fix: assert used as the validation guard (stripped by python -O)"
+    },
+    {
+     "start": 93,
+     "end": 93,
+     "old_sha256": "ef353419516742df39dbfb6e92731aca3b88d600ac6f74bcfce7d678be92147d",
+     "new": "        if c != dec:\n            raise ValueError(f\"rep {r['npn_rep_hex']} (dec={dec}) is not a fixed point: canon={c:#06x}\")",
+     "reason": "fix: assert used as the validation guard (stripped by python -O)"
+    },
+    {
+     "start": 99,
+     "end": 102,
+     "old_sha256": "fa9e7f116ed7607b61c56748b5cea7e0844869ab77a2b353659537922387dc22",
+     "new": "    if seen != csv_reps:\n        raise ValueError(\n            f\"class sets diverge: {len(seen)} canonicalised vs \"\n            f\"{len(csv_reps)} in the CSV; diff={seen.symmetric_difference(csv_reps)}\"\n        )",
+     "reason": "fix: assert used as the validation guard (stripped by python -O)"
+    },
+    {
+     "start": 109,
+     "end": 109,
+     "old_sha256": "bfe4d977e1e9ed24b1769ac155fb0b6ebfc4e7e5b052d85cc06a52de0d73a172",
+     "new": "    if c not in census:\n        raise ValueError(f\"canonical class {c:#06x} missing from the census (cannot happen after validate)\")",
+     "reason": "fix: assert used as the validation guard (stripped by python -O)"
+    }
+   ]
+  },
+  {
+   "copy": "src/certlab/witness.py",
+   "original_basename": "reproduce_witness.py",
+   "original_sha256": "3e77eddcafec2f1bc796258bdd4d23495af86917a8001fa62e03b1caabbcf2e9",
+   "patches": [
+    {
+     "start": 30,
+     "end": 35,
+     "old_sha256": "e21be0c248840bcd7c63676f4dabd68e7dcc83ef882e16de866fd25bedb2feb4",
+     "new": "from certlab.encoders.aig import AIGEncoder, verify_circuit             # noqa: E402\nfrom certlab.certify.forced_multi import build_amo_shared                  # noqa: E402\nfrom certlab.certify.zc_certify import write_cnf, kissat, drat_verify, sha16 # noqa: E402",
+     "reason": "import: package import instead of sys.path.insert"
+    },
+    {
+     "start": 82,
+     "end": 82,
+     "old_sha256": "088d654404e2ca04aa0efc812e4c3915a88993518b40891c76a96519e6d34c4c",
+     "new": "OUT = os.environ.get(\"CERTLAB_OUT\", os.path.join(os.getcwd(), \"certlab_generated\"))",
+     "reason": "path: output/data location for an installed package instead of the research tree"
+    },
+    {
+     "start": 120,
+     "end": 120,
+     "old_sha256": "1f1be4cda7ae2225c8fa50a81fb8e6eca79577fc649896d9eead8a423775fcfb",
+     "new": "        if rc != 20:\n            raise RuntimeError(f\"k={k} expected UNSAT(20), got {rc}\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 130,
+     "end": 130,
+     "old_sha256": "4e6f9ce56c5b4f36d0b3839ad5d2792ac7884f78acdb171683ee97629b15cba8",
+     "new": "    if rc != 10:\n        raise RuntimeError(f\"k={OPT} expected SAT(10), got {rc}\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 140,
+     "end": 140,
+     "old_sha256": "ec1d4e534466b210f1c67fbe473ab14047bc2e39898fcdd5a53e356ff32ef42b",
+     "new": "    if rc != 10:\n        raise RuntimeError(f\"formula k={OPT+1} expected SAT(10), got {rc}\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 196,
+     "end": 197,
+     "old_sha256": "f3efbd518962d6e2305e64e95dbdfd5bca68e41d86cb57ef715e1ff84dec32c6",
+     "new": "    cands = [os.path.join(HERE, \"..\", \"..\", \"data\", \"witness\", f\"tree_chain_n5_{TT:#010x}.csv\"),\n             os.path.join(HERE, \"..\", \"..\", \"data\", \"witness\", \"tree_chain_n5.csv\")]",
+     "reason": "path: output/data location for an installed package instead of the research tree"
+    },
+    {
+     "start": 227,
+     "end": 227,
+     "old_sha256": "0dbc088f643313b09a4ba8056a43140fe821c29f2d064bf8df0abeb84c020ffd",
+     "new": "        if rc != 20:\n            raise RuntimeError(f\"formula k={k} expected UNSAT(20), got {rc}\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 263,
+     "end": 263,
+     "old_sha256": "e3eae8310bdbece3373cd141d4626b98a8aa4cd26448d6a71fe7fe7432cfc32a",
+     "new": "    if rc != 20:\n        raise RuntimeError(f\"forced-multi expected UNSAT(20), got {rc}\")",
+     "reason": "fix: assert used as a verdict guard (stripped by python -O)"
+    },
+    {
+     "start": 300,
+     "end": 301,
+     "old_sha256": "1506d73ac8fe2d431b55e5db3b0875eae20d9c13ab240a58fd2ae5870e94542f",
+     "new": "",
+     "reason": "scrub: message pointed to a script of the private research tree"
+    }
+   ]
+  },
+  {
+   "copy": "src/certlab/artifact_io.py",
+   "original_basename": "artifact_io.py",
+   "original_sha256": "31b6535505c2f2cd8c6eddeb9d68e3557e8f67515003164717de969079c3bae6",
+   "patches": []
+  },
+  {
+   "copy": "tests/gates/gate_xag.py",
+   "original_basename": "gate_xag.py",
+   "original_sha256": "adeb2515e375be9bd1eeca09812c7f046556e5c26f8e4aaa36607662c3780ea8",
+   "patches": [
+    {
+     "start": 15,
+     "end": 18,
+     "old_sha256": "f623aadb969f06851a95f37047a0d1fc390f02c9af0f00328b9ea72fc442219a",
+     "new": "from certlab.encoders.xag import opt_via_sat, trivial_opt\nfrom certlab.encoders import aig as aig_exact",
+     "reason": "import: package import instead of sys.path.insert"
+    }
+   ]
+  },
+  {
+   "copy": "tests/gates/gate_mig.py",
+   "original_basename": "gate_mig.py",
+   "original_sha256": "d32f0ece1e5119b77ae9e9b179939aef1ea653bf648225a70beaf764b6a23326",
+   "patches": [
+    {
+     "start": 14,
+     "end": 17,
+     "old_sha256": "160f960897da78d808c938e634b5b67bba1f9d0235b6efb671e9a3441b55dec7",
+     "new": "from certlab.encoders.mig import opt_via_sat, trivial_opt\nfrom certlab.encoders import aig as aig_exact",
+     "reason": "import: package import instead of sys.path.insert"
+    }
+   ]
+  }
+ ]
+}

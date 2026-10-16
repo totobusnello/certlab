@@ -1,0 +1,49 @@
+result,leg,k,cnf_sha16,verdict,regenerate,path
+7th-class witness 0x03de0154,opt lower bound,1,87e9e86c035d178e,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness,no-sb
+7th-class witness 0x03de0154,opt lower bound,2,643d4fc6dcd26690,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness,no-sb
+7th-class witness 0x03de0154,opt lower bound,3,a4c2ba4cd9869694,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness,no-sb
+7th-class witness 0x03de0154,opt lower bound,4,8cc6311c2452bdff,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness,no-sb
+7th-class witness 0x03de0154,opt lower bound,5,332e32b9d40121de,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness,no-sb
+7th-class witness 0x03de0154,opt lower bound,6,c2b41413f8d88dff,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness,no-sb
+7th-class witness 0x03de0154,opt lower bound,7,e9895415f992bfdd,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness,no-sb
+7th-class witness 0x03de0154,opt witness,8,aa50491525665129,SAT / verify_circuit self-certifying => opt=8,python3 -m certlab.witness,no-sb
+7th-class witness 0x03de0154,tree upper bound (fan-out-1 formula),9,8fa10b4d591f800f,SAT / verify_circuit self-certifying => tree<=9,python3 -m certlab.witness,no-sb
+7th-class witness 0x03de0154,forced-multi (amo-shared NO symmetry break),8,ed3b8350f72f8078,UNSAT / drat-trim VERIFIED => every optimum has >=2 reconvergences,python3 -m certlab.witness --full,no-sb
+7th-class witness 0x03de0154,non-canalizing (no constant cofactor),,,combinatorial => not an AND/OR-lift,python3 -m certlab.witness,n/a
+F5 count,">=74 distinct NPN classes (11 in the lift closure: 6 AND-lifts + 6 OR-lifts with one collision; + 63 non-lifts: 6 by construction/sweep, 4 from the exhaustive opt=7 scan, 53 from the exhaustive opt=8 census)",,,F5 >= 74,f5_classes.csv,no-sb
+10th-class witness 0x09c50800,opt lower bound,1,93e5b48eeace3859,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness 0x09c50800,no-sb
+10th-class witness 0x09c50800,opt lower bound,2,325da4d52baf998b,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness 0x09c50800,no-sb
+10th-class witness 0x09c50800,opt lower bound,3,2d97b762cf4a1673,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness 0x09c50800,no-sb
+10th-class witness 0x09c50800,opt lower bound,4,08650932a407b6c9,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness 0x09c50800,no-sb
+10th-class witness 0x09c50800,opt lower bound,5,ca73dfeecc71cb45,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness 0x09c50800,no-sb
+10th-class witness 0x09c50800,opt lower bound,6,af1360aa4a704081,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness 0x09c50800,no-sb
+10th-class witness 0x09c50800,opt lower bound,7,ea9483623e205afd,UNSAT / drat-trim VERIFIED,python3 -m certlab.witness 0x09c50800,no-sb
+10th-class witness 0x09c50800,opt witness,8,b036c25a447dc84b,SAT / verify_circuit self-certifying => opt=8,python3 -m certlab.witness 0x09c50800,no-sb
+10th-class witness 0x09c50800,tree upper bound (fan-out-1 formula; per-gate fan-out counted),9,343cecdb5118640b,SAT / verify_circuit + fan-out count => tree<=9,python3 -m certlab.witness 0x09c50800,no-sb
+10th-class witness 0x09c50800,forced-multi (amo-shared NO symmetry break),8,8949334bf9baa8ca,UNSAT / drat-trim VERIFIED => every optimum has >=2 reconvergences,python3 -m certlab.witness 0x09c50800 --full,no-sb
+non-lift witness 0xabfe03de,forced-multi (amo-shared NO symmetry break),8,39d9bd8db8daeb8b,UNSAT / drat-trim VERIFIED => every optimum has >=2 reconvergences; forcedness certified WITHOUT gate_order_b; 2026-08-12,python3 -m certlab.witness 0xabfe03de --full,no-sb
+non-lift witness 0x57df03de,forced-multi (amo-shared NO symmetry break),8,378fa46181ed496b,UNSAT / drat-trim VERIFIED => every optimum has >=2 reconvergences; forcedness certified WITHOUT gate_order_b; 2026-08-12,python3 -m certlab.witness 0x57df03de --full,no-sb
+non-lift witness 0xabfe03de,opt lower bound,1,705839047160f1c4,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0xabfe03de,no-sb
+non-lift witness 0xabfe03de,opt lower bound,2,ee32497deafe66af,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0xabfe03de,no-sb
+non-lift witness 0xabfe03de,opt lower bound,3,18c433e55296daa5,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0xabfe03de,no-sb
+non-lift witness 0xabfe03de,opt lower bound,4,573840fd4e0c16f1,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0xabfe03de,no-sb
+non-lift witness 0xabfe03de,opt lower bound,5,7e89c992ffa4ed14,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0xabfe03de,no-sb
+non-lift witness 0xabfe03de,opt lower bound,6,fb2ff09dc153223b,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0xabfe03de,no-sb
+non-lift witness 0xabfe03de,opt lower bound,7,58ed6ad84d70938a,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0xabfe03de,no-sb
+non-lift witness 0xabfe03de,opt witness,8,86c5c65237fc1a44,SAT / verify_circuit re-simulated => opt = 8; opt chain committed 2026-08-12,python3 -m certlab.witness 0xabfe03de,no-sb
+non-lift witness 0x57df03de,opt lower bound,1,c886f6de8c1de9c8,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0x57df03de,no-sb
+non-lift witness 0x57df03de,opt lower bound,2,bec65100651f26e6,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0x57df03de,no-sb
+non-lift witness 0x57df03de,opt lower bound,3,22ee43221bad62aa,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0x57df03de,no-sb
+non-lift witness 0x57df03de,opt lower bound,4,82e724821a51a4ce,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0x57df03de,no-sb
+non-lift witness 0x57df03de,opt lower bound,5,ba91ff438f6b2117,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0x57df03de,no-sb
+non-lift witness 0x57df03de,opt lower bound,6,2e33e49d980db9f0,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0x57df03de,no-sb
+non-lift witness 0x57df03de,opt lower bound,7,c9a81c3c11051d1c,UNSAT / drat-trim VERIFIED; opt chain committed 2026-08-12,python3 -m certlab.witness 0x57df03de,no-sb
+non-lift witness 0x57df03de,opt witness,8,88be777271330529,SAT / verify_circuit re-simulated => opt = 8; opt chain committed 2026-08-12,python3 -m certlab.witness 0x57df03de,no-sb
+10th-class witness 0x09c50800,non-canalizing (no constant cofactor),,,combinatorial => not an AND/OR-lift,python3 -m certlab.witness 0x09c50800,n/a
+re-verification 2026-08-11,flagship opt chain k=1..7 re-generated on one machine and re-checked on a second (independently built drat-trim),1-7,all 7 match the rows above,7/7 s VERIFIED on both machines; k=1..7 DRATs shipped in the unit-gap-artefacts deposit,python3 -m certlab.witness 0x03de0154,no-sb
+7th-class witness 0x03de0154,tree lower bound (fan-out-1 formula UNSAT chain k=1..8; NO forced-multi dependency),1-8,b922fe75b9c3508e (k=8; per-leg shas in data/witness/tree_chain_n5.csv),"8/8 s VERIFIED on two machines => tree >= 9; with the k=9 model, tree = 9",python3 -m certlab.witness 0x03de0154 --tree-chain,no-sb
+non-lift witness 0xabfe03de,tree upper bound (fan-out-1 formula; per-gate fan-out counted),9,d412b784a96d9403,SAT / verify_circuit re-simulated + fan-out 1 on every non-output gate => tree<=9,python3 -m certlab.witness 0xabfe03de,no-sb
+non-lift witness 0x57df03de,tree upper bound (fan-out-1 formula; per-gate fan-out counted),9,1167a3e310506e27,SAT / verify_circuit re-simulated + fan-out 1 on every non-output gate => tree<=9,python3 -m certlab.witness 0x57df03de,no-sb
+10th-class witness 0x09c50800,tree lower bound (fan-out-1 formula UNSAT chain k=1..8; NO forced-multi dependency),1-8,18f1a215b6e1d1bd (k=8; per-leg shas in data/witness/tree_chain_n5_0x09c50800.csv),"8/8 s VERIFIED => tree >= 9; decisive leg 81.0 s; with the k=9 model pinned above, tree = 9",python3 -m certlab.witness 0x09c50800 --tree-chain,no-sb
+non-lift witness 0xabfe03de,tree lower bound (fan-out-1 formula UNSAT chain k=1..8; NO forced-multi dependency),1-8,0cfc8cf0b2b03082 (k=8; per-leg shas in data/witness/tree_chain_n5_0xabfe03de.csv),"8/8 s VERIFIED => tree >= 9; decisive leg 163.1 s; with the k=9 model pinned above, tree = 9",python3 -m certlab.witness 0xabfe03de --tree-chain,no-sb
+non-lift witness 0x57df03de,tree lower bound (fan-out-1 formula UNSAT chain k=1..8; NO forced-multi dependency),1-8,441e3b5ef71f4f04 (k=8; per-leg shas in data/witness/tree_chain_n5_0x57df03de.csv),"8/8 s VERIFIED => tree >= 9; decisive leg 195.4 s; with the k=9 model pinned above, tree = 9",python3 -m certlab.witness 0x57df03de --tree-chain,no-sb

@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below, and cite the archived deposit whose results you reproduce (see README, How to cite)."
+title: "certlab: exact synthesis of small Boolean circuits by SAT, with DRAT-certified lower bounds"
+abstract: >-
+  SAT encoders for exact synthesis of single-output Boolean functions in the AIG, XAG and MIG
+  bases (circuit and formula modes), a certification chain whose lower bounds are UNSAT results
+  with drat-trim-verified DRAT proofs, NPN canonicalisation for 4-input functions, and scripts
+  that regenerate published forced-reconvergence witnesses from scratch.
+authors:
+  - family-names: Busnello
+    given-names: Luiz Antonio
+    affiliation: "Independent Researcher"
+type: software
+license: MIT
+version: 0.1.0
+keywords:
+  - exact synthesis
+  - SAT solving
+  - DRAT
+  - And-Inverter Graph
+  - XOR-AND graph
+  - Majority-Inverter Graph
+  - circuit complexity
+  - formula size
+references:
+  - type: dataset
+    title: "unit-gap-artefacts: machine-checkable artefacts for a refutation of Theorem 2 of arXiv:2603.08033"
+    authors:
+      - family-names: Busnello
+        given-names: Luiz Antonio
+    doi: 10.5281/zenodo.21630762
+  - type: dataset
+    title: "opt(0x1669) = opt(0x166b) = 10: CNFs, DRAT proofs for k <= 8 and a normalization lemma for the last two open entries of the NPN-4 exact AIG catalog"
+    authors:
+      - family-names: Busnello
+        given-names: Luiz Antonio
+    doi: 10.5281/zenodo.23329385
+  - type: dataset
+    title: "Exact-synthesis audit of the SPbSAT/simplifier AIG database (version 1.0.2)"
+    authors:
+      - family-names: Busnello
+        given-names: Luiz Antonio
+    doi: 10.5281/zenodo.23375519
+  - type: dataset
+    title: "Atlas of the 222 NPN classes of 4-variable Boolean functions in three bases (AIG, MIG, XAG): circuit size, formula size, gap and structural invariants"
+    authors:
+      - family-names: Busnello
+        given-names: Luiz Antonio
+    doi: 10.5281/zenodo.23329554

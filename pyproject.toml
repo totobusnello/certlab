@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "certlab"
+version = "0.1.0"
+description = "Exact synthesis of small Boolean circuits (AIG, XAG, MIG) by SAT, with DRAT-certified lower bounds"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Luiz Antonio Busnello" }]
+requires-python = ">=3.9"
+dependencies = []
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+keywords = ["exact synthesis", "SAT", "DRAT", "And-Inverter Graph", "XAG", "MIG", "circuit complexity"]
+
+[project.optional-dependencies]
+# certlab.encoders.aig.solve_k / opt_via_sat use the Glucose 4 solver bundled with python-sat;
+# everything else calls the kissat binary. The CLI and the certification chain do not need it.
+pysat = ["python-sat"]
+test = ["pytest"]
+
+[project.scripts]
+certlab = "certlab.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: long-running validation gates (tens of seconds to minutes)",
+]
