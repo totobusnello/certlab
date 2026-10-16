@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-10-16)
 
 Phase 1, single-output. Consolidates, as one package, code first published inside the deposits
 listed in README ("How to cite"), translated and checked against the originals before release.

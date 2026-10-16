@@ -13,6 +13,9 @@ authors:
 type: software
 license: MIT
 version: 0.1.0
+date-released: 2026-10-16
+doi: 10.5281/zenodo.23420661
+repository-code: "https://github.com/totobusnello/certlab"
 keywords:
   - exact synthesis
   - SAT solving

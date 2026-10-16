@@ -118,7 +118,8 @@ the one whose results you reproduce, and this package for the software:
   1.0.2, [10.5281/zenodo.23375519](https://doi.org/10.5281/zenodo.23375519): the DRAT verdict
   script.
 
-The software itself: see `CITATION.cff` (no DOI yet).
+The software itself: L. A. Busnello, *certlab* 0.1.0, Zenodo,
+[10.5281/zenodo.23420661](https://doi.org/10.5281/zenodo.23420661) (metadata in `CITATION.cff`).
 
 The MIG results replicate the exact-synthesis catalogue of M. Soeken, L. G. Amarù,
 P.-E. Gaillardon and G. De Micheli, "Optimizing Majority-Inverter Graphs with Functional Hashing",
