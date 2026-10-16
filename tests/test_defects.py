@@ -1,8 +1,7 @@
 """Regression tests for the defects fixed in the package (TESTING.md, "Defects fixed").
 
 Every probe runs in a subprocess, with and without `python3 -O`, and must hit its guard
-(RAISED). tools/prove_fixes.py runs the same probes against the original scripts, where they
-come back RETURNED under -O: each of these tests fails on the old code.
+(RAISED).
 """
 import os
 import re

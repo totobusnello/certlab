@@ -21,7 +21,7 @@ from certlab.certify.zc_certify import write_cnf, kissat, drat_verify, sha16, CE
 N = 5
 
 
-def build_amo_shared(tt, opt, gate_order_sb=False, gate_order_b=False, n=None, relax=()):
+def build_amo_shared(tt, opt, gate_order_b=False, n=None, relax=()):
     """Base circuit encoder (k=opt) + at-most-one-shared. Sound direction: fan-out>=2 => z.
 
     `n` is REQUIRED (a TypeError is raised without it). It used to default to the module-level
@@ -31,18 +31,15 @@ def build_amo_shared(tt, opt, gate_order_sb=False, gate_order_b=False, n=None, r
     object. Overriding the global from `main` worked for direct execution and not for import --
     the worst combination, because it looked fixed.
 
-    gate_order_sb (default False = byte-identical to the vetted path):
-    *** UNSOUND -- DO NOT USE FOR CERTIFICATION. Kept only for the record. ***
-    This adds a gate-ordering symmetry break (order NON-OUTPUT gates 1..k-1 by operand 4-tuple
-    (a,pa,b,pb) via adjacent-pair clauses, output gate exempt). It was CONJECTURED WLOG, and
-    wrongly confirmed by one review, but another review found a concrete counterexample
-    (tt=0x80008000: an optimal fan-out-1 circuit g1=x2&x3 (2,0,3,0) -> g2=x1&g1 (1,0,6,0) whose
-    topology forces a DECREASING tuple, so the SB forbids a valid circuit). Lex order on `a` is
-    incompatible with the topological constraint (a just-placed node enters the next gate as its
-    LARGER operand b). Hence gate_order_sb=True can turn a truly-SAT amo-shared instance UNSAT
-    => it does NOT certify forced-multi. A topology-compatible ordering (by the larger operand
-    b) is a possible repair, but needs independent vetting BEFORE any reliance. Empirical
-    validation on known instances is necessary but NOT sufficient."""
+    gate_order_b (default False): EXPERIMENTAL, opt-in, NOT proved WLOG. Adds a gate-ordering
+    symmetry break on the NON-OUTPUT gates 1..k-1, keyed by the larger operand first
+    (b, a, pa, pb), via adjacent-pair clauses; the output gate is exempt. Empirically it gave
+    0 wrong verdicts on the 51 SAT baselines used in the research audit, which is evidence, not
+    a proof. No certificate produced by this package uses it: every certification path runs
+    without symmetry breaking. A verdict obtained with gate_order_b=True is not a certificate.
+
+    An earlier gate-ordering symmetry break by the smaller operand was unsound (counterexample
+    tt = 0x80008000) and has been removed."""
     if n is None:
         raise TypeError("build_amo_shared: n is required (pass n= explicitly; there is no module default)")
     nn = n
@@ -54,21 +51,14 @@ def build_amo_shared(tt, opt, gate_order_sb=False, gate_order_b=False, n=None, r
     nvars = enc.nvars
     clauses = list(enc.clauses)
     k = opt
-    if gate_order_sb:
-        for i in range(1, k - 1):            # adjacent pairs (i,i+1), both <= k-1 (non-output)
-            for (a, pa, b, pb, s) in enc.options[i]:
-                ti = (a, pa, b, pb)
-                for (a2, pa2, b2, pb2, s2) in enc.options[i + 1]:
-                    if (a2, pa2, b2, pb2) < ti:   # tuple(i) > tuple(i+1): forbid this pairing
-                        clauses.append([-s, -s2])
     if gate_order_b:
-        # REPAIR candidate: order NON-OUTPUT gates by the LARGER operand b FIRST
-        # (key = (b,a,pa,pb)) instead of by a. Rationale: a gate that becomes available only
-        # after some node j is placed uses j as its larger operand b, so b tracks topological
-        # depth => ordering by non-decreasing b is compatible with the topological constraint
-        # (unlike ordering by a). This ADMITS the counterexample circuit above. Whether it is
-        # truly WLOG is NOT established -- do NOT rely on a verdict from it until it is proved
-        # sound. Output gate k exempt.
+        # Order NON-OUTPUT gates by the LARGER operand b FIRST (key = (b,a,pa,pb)), not by a.
+        # Rationale: a gate that becomes available only after some node j is placed uses j as
+        # its larger operand b, so b tracks topological depth => ordering by non-decreasing b is
+        # compatible with the topological constraint (ordering by a is not). It admits the
+        # circuit that refuted the removed ordering (tt = 0x80008000: g1 = x2&x3, g2 = x1&g1).
+        # Whether it is truly WLOG is NOT established -- a verdict from it is not a certificate.
+        # Output gate k exempt.
         for i in range(1, k - 1):
             for (a, pa, b, pb, s) in enc.options[i]:
                 ki = (b, a, pa, pb)

@@ -1,17 +1,14 @@
 """Probes for the defects fixed in the package (see TESTING.md, "Defects fixed").
 
 Each probe is a small Python program run in a SUBPROCESS, so that it can be run under
-`python3 -O` (which strips `assert` statements) and against either the packaged modules or the
-original research scripts. A probe prints exactly one line:
+`python3 -O` (which strips `assert` statements). A probe prints exactly one line:
 
     RAISED <ExceptionType> <message>     the guard fired
     RETURNED <value>                     the call came back with a value
 
 The packaged code must print RAISED for every probe, with and without -O.
-`tools/prove_fixes.py` runs the same probes against the ORIGINAL scripts and shows that they
-print RETURNED under -O (the defect), i.e. that each test fails on the old version.
 
-`IMPORTS_NEW` / `IMPORTS_OLD` bind the module under test to the name M.
+`IMPORTS_NEW` binds the module under test to the name M.
 """
 import os
 import subprocess
@@ -24,14 +21,6 @@ IMPORTS_NEW = {
     "npn": "from certlab import npn as M",
     "forced_multi": "from certlab.certify import forced_multi as M",
     "witness": "from certlab import witness as M",
-}
-IMPORTS_OLD = {
-    "aig": "import aig_exact as M",
-    "xag": "import xag_exact as M",
-    "mig": "import mig_exact as M",
-    "npn": "import npn_canon as M",
-    "forced_multi": "import n5_forced_test as M",
-    "witness": "import reproduce_witness as M",
 }
 
 # Fake kissat behaviours: none of them is a verdict (10 = SAT, 20 = UNSAT).
