@@ -3,11 +3,13 @@
 Exact synthesis of small Boolean circuits by SAT, with lower bounds certified by DRAT proofs.
 
 certlab answers questions of the form "what is the smallest circuit computing f?" for
-single-output functions of up to five or six inputs, in three bases:
+small single-output functions (the test suite goes up to five inputs; beyond that, what is
+feasible depends on the function and the solver), in three bases:
 
 - **AIG**: 2-input AND gates, inversions free on every edge (size = number of AND gates);
 - **XAG**: AND and XOR gates;
-- **MIG**: 3-input majority gates with a constant input.
+- **MIG**: 3-input majority gates, inversions free on every edge, with the constant 0 available
+  as an operand.
 
 Each encoder also has a **formula mode** (every gate has fan-out 1), which gives the smallest
 formula (`tree`) instead of the smallest circuit (`opt`).
@@ -15,24 +17,26 @@ formula (`tree`) instead of the smallest circuit (`opt`).
 A size bound is only as good as its evidence, so the package separates the two directions:
 
 - **upper bound**: a satisfying assignment is decoded into a circuit and re-simulated on the whole
-  truth table, by the encoder's own simulator and by an independent one (`certlab.simulate`);
+  truth table by `certlab.simulate`, a simulator separate from the encoders' own (the tests
+  cross-check the two on 900 random circuits);
 - **lower bound**: "no circuit with k gates" is an UNSAT result, certified by a DRAT proof checked
   with `drat-trim`, and read by one documented verdict (`scripts/check_drat.sh`, exit codes
-  0 verified / 1 refuted / 2 usage / 3 time limit / 4 checker failed).
+  0 verified / 1 not verified / 2 usage / 3 time limit / 4 checker failed).
 
 On top of the encoders, the certification chain proves structural facts about **all** optimal
-circuits of a function, for example that every size-optimal AIG has at least two reconvergent
-gates ("forced multiple reconvergence"): the at-most-one-shared constraint is added to the
-encoding at `k = opt` and the result is UNSAT with a DRAT proof, with no symmetry breaking.
+circuits of a function, relative to the circuit model the encoding describes. For example, it can
+show that every size-optimal AIG of a given function has at least two reconvergent gates ("forced
+multiple reconvergence"): the at-most-one-shared constraint is added to the encoding at `k = opt`
+and the result is UNSAT with a DRAT proof, with no symmetry breaking.
 
-This is release 0.1 (phase 1, single-output). Multi-output encoders, depth-bounded encoders,
+This is release 0.1.0 (phase 1, single-output). Multi-output encoders, depth-bounded encoders,
 multiplicative complexity and VeriPB-certified symmetry breaking are not included.
 
 ## Installation
 
 Requirements: Python 3.9 or later, and two binaries on `PATH`:
 
-- [kissat](https://github.com/arminbiere/kissat) (SAT solver; any 3.x or 4.x release):
+- [kissat](https://github.com/arminbiere/kissat) (SAT solver; tested with 4.0.4):
   `brew install kissat`, or build from source (`./configure && make`).
 - [drat-trim](https://github.com/marijnheule/drat-trim) (proof checker):
   `git clone https://github.com/marijnheule/drat-trim && cd drat-trim && make`, then put the
@@ -97,7 +101,7 @@ python3 tools/scrub_check.py        # leak scan of the package (rc 0 = clean)
 ```
 
 `TESTING.md` lists what each test guarantees, the defects fixed with respect to the research
-scripts the package was copied from, and the recorded output of every run.
+scripts the package was copied from, and the recorded output of the release validation.
 
 ## How to cite
 

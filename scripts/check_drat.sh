@@ -19,7 +19,7 @@
 #
 # Exit codes:
 #   0 -- proof VERIFIED
-#   1 -- proof NOT verified: drat-trim printed `s NOT VERIFIED` (the proof is wrong; this includes
+#   1 -- proof NOT verified: drat-trim printed `s NOT VERIFIED` (no lower bound is certified; this includes
 #        SAT instances, where there is no UNSAT to prove)
 #   2 -- usage error, missing file, or drat-trim absent
 #   3 -- NOT CONCLUDED: drat-trim hit its time limit (`s TIMEOUT`, rc=0). Neither verified nor refuted.

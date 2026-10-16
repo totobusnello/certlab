@@ -26,25 +26,25 @@ keywords:
   - circuit complexity
   - formula size
 references:
-  - type: dataset
+  - type: data
     title: "unit-gap-artefacts: machine-checkable artefacts for a refutation of Theorem 2 of arXiv:2603.08033"
     authors:
       - family-names: Busnello
         given-names: Luiz Antonio
     doi: 10.5281/zenodo.21630762
-  - type: dataset
+  - type: data
     title: "opt(0x1669) = opt(0x166b) = 10: CNFs, DRAT proofs for k <= 8 and a normalization lemma for the last two open entries of the NPN-4 exact AIG catalog"
     authors:
       - family-names: Busnello
         given-names: Luiz Antonio
     doi: 10.5281/zenodo.23329385
-  - type: dataset
+  - type: data
     title: "Exact-synthesis audit of the SPbSAT/simplifier AIG database (version 1.0.2)"
     authors:
       - family-names: Busnello
         given-names: Luiz Antonio
     doi: 10.5281/zenodo.23375519
-  - type: dataset
+  - type: data
     title: "Atlas of the 222 NPN classes of 4-variable Boolean functions in three bases (AIG, MIG, XAG): circuit size, formula size, gap and structural invariants"
     authors:
       - family-names: Busnello

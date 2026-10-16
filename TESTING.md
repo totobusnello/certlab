@@ -7,7 +7,7 @@ Two checks gate the package, and each one is run on inputs it must reject:
 
 | check | command | what it guarantees | proof that it can fail |
 |---|---|---|---|
-| leak scan | `python3 tools/scrub_check.py` | no AI model or vendor name, person name, host, machine path, internal identifier, secret, tool mark or Portuguese word in any file (file-scoped allowlist in the script) | `--prove`: one planted infringing file per pattern, each must give rc 1 |
+| leak scan | `python3 tools/scrub_check.py` | no match, in any file, for the configured patterns (AI model or vendor name, person name, host, machine path, internal identifier, secret, tool mark, Portuguese word), with a file-scoped allowlist in the script; a pattern scan, not a full confidentiality audit | `--prove`: one planted infringing file per pattern, each must give rc 1 |
 | test suite | `python3 -m pytest` | see below | section 1: every probe plants a failure (fake solver, bad model, corrupt census) and the drat-trim battery starts with the proofs that must not pass |
 
 Equivalence of the translated modules to the original research scripts was checked before release; the record is kept with the research repository.
@@ -67,7 +67,7 @@ notice; the model and vendor named by the AI-use statement of README.md.
 |---|---|---|
 | `test_encoder_regression.py` | the 40 CNFs pinned in `data/manifest.csv` (28 circuit, 4 amo-shared, 8 formula) regenerate byte for byte; floor of 40; plus the 4 `opt witness` rows and the 32 per-leg tree-chain pins of `data/witness/` | research `encoder_regression.sh` |
 | `test_drat_verdict.py` | one drat-trim battery, negative cases first, three readers agree; real proof verified, empty proof rejected, usage errors exit 2 | research `test-check_drat.sh` + the out-of-memory/timeout cases of `test-run_cell_drat.sh` |
-| `test_defects.py` | section 2 | new |
+| `test_defects.py` | section 1 | new |
 | `gates/gate_xag.py`, `gates/gate_mig.py` via `test_gates.py` (slow) | n = 2 sanity; all 256 functions of n = 3 against an independent exhaustive enumeration and against opt_AIG | research gates X1+X2, M1+M2 |
 | `test_bases_n3.py` | opt_XAG <= opt_AIG and opt_MIG <= opt_AIG on the 14 NPN classes of n = 3; opt_AIG equals an independent BFS enumeration; parity of 3 = (6, 2, 3) | new |
 | `test_simulate_and_convention.py` | independent simulators agree with the encoders' on 900 random circuits and reject adulterated tables; a witness of x1 AND NOT x2 checks under the encoders' bit convention and fails under the inverted one, in all three bases | new |

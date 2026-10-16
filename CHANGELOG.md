@@ -13,7 +13,7 @@ listed in README ("How to cite"), translated and checked against the originals b
   witnesses), `certlab.simulate` (independent simulators, new), `certlab.cli` (new).
 - Fixed with respect to the original scripts (TESTING.md, "Defects fixed"): verdict guards that
   were `assert` statements (removed by `python -O`) are now exceptions; `check_drat.sh` no longer
-  reports a killed or out-of-memory checker as a refuted proof (new exit code 4) and reads
+  reports a killed or out-of-memory checker as an unverified proof (new exit code 4) and reads
   drat-trim's "time limit exceeded" as a time limit (see "Changed contract" below);
   `build_amo_shared` requires `n`; imports are package imports; `reverify.sh` fails when a proof
   has no formula to be checked against.
@@ -24,8 +24,8 @@ listed in README ("How to cite"), translated and checked against the originals b
 
 ### Changed contract
 
-- `scripts/check_drat.sh` exit codes: 0 verified, 1 not verified (`s NOT VERIFIED`, the proof is
-  wrong), 2 usage error / missing file / drat-trim absent, 3 drat-trim time limit (not concluded),
+- `scripts/check_drat.sh` exit codes: 0 verified, 1 not verified (`s NOT VERIFIED`: the checker
+  did not verify the proof, so no lower bound is certified), 2 usage error / missing file / drat-trim absent, 3 drat-trim time limit (not concluded),
   4 checker failure (killed, out of memory, no status line, or `s VERIFIED` with a non-zero exit;
   neither verified nor refuted). The copy published earlier (Zenodo, DOI 10.5281/zenodo.23375519)
   returns 1 in the cases that now return 4, and 1 for a time limit reported only as "time limit
