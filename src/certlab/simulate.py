@@ -107,6 +107,46 @@ def check(basis, n, tt, gates, out_pol, convention="lsb"):
     return simulate(basis, n, gates, out_pol, convention) == tt
 
 
+def simulate_multi(basis, n, gates, outs, convention="lsb"):
+    """Truth tables of a multi-output circuit (the format of the multi-output encoders' `decode`).
+
+    gates: as for the single-output simulators ("aig" or "mig"; node 0 is the constant 0, which
+    MIG gates may read and any output may select). outs: [(node, pol), ...], one per output;
+    output o is the table of `node`, complemented when pol is true. Unlike the single-output
+    simulators, an empty gate list is allowed (every output is then a constant or a literal).
+    """
+    m = _mask(n)
+    val = _node_tables(n, convention)
+    val[0] = 0
+    node = n
+    for g in gates:
+        node += 1
+        if basis == "aig":
+            a, pa, b, pb = g
+            val[node] = (val[a] ^ (m if pa else 0)) & (val[b] ^ (m if pb else 0))
+        elif basis == "mig":
+            a, pa, b, pb, c, pc = g
+            va = val[a] ^ (m if pa else 0)
+            vb = val[b] ^ (m if pb else 0)
+            vc = val[c] ^ (m if pc else 0)
+            val[node] = (va & vb) | (va & vc) | (vb & vc)
+        else:
+            raise ValueError(f"unknown multi-output basis {basis!r}; expected 'aig' or 'mig'")
+    tables = []
+    for (nd, pol) in outs:
+        if nd not in val:
+            raise ValueError(f"output selects node {nd}, which does not exist")
+        tables.append(val[nd] ^ (m if pol else 0))
+    return tables
+
+
+def check_multi(basis, n, tts, gates, outs, convention="lsb"):
+    """True iff the multi-output circuit computes every table of tts, in order."""
+    if len(outs) != len(tts):
+        return False
+    return simulate_multi(basis, n, gates, outs, convention) == list(tts)
+
+
 def fanout(basis, n, gates):
     """Number of gate operands that read each internal node (inputs and the constant excluded)."""
     cnt = {}

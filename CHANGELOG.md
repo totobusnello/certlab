@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased (phase 2, multi-output)
+
+- Encoders: multi-output AIG (`certlab.encoders.multi_aig`) and multi-output MIG
+  (`certlab.encoders.multi_mig`, with `sum_tts`, optional fences and an optional
+  input-symmetry break). Python API only; the CLI is unchanged. A multi-output XAG encoder is not
+  included: none existed in the research code this package is drawn from.
+- `certlab.simulate.simulate_multi` / `check_multi`: independent word-parallel simulators for
+  multi-output circuits.
+- With respect to the original scripts (TESTING.md, section 4): verdict guards that were `assert`
+  statements are exceptions; the multi-output AIG encoder now reads input x_j as bit j-1 of the row
+  index, like every other certlab module (the original read it as bit n-j; minimum sizes do not
+  change, decoded circuits are now read in the certlab convention); the gate-ordering symmetry
+  break of the multi-output MIG encoder (`symbreak`) is removed, since it constrained nothing and
+  no certificate used it.
+
 ## 0.1.0 (2026-10-16)
 
 Phase 1, single-output. Consolidates, as one package, code first published inside the deposits

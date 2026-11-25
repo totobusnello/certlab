@@ -185,3 +185,62 @@ user 238,37
 sys 19,33
 EXIT=0
 ```
+
+## 4. Phase 2, multi-output encoders (unreleased)
+
+Recorded on 2026-11-25, same machine and toolchain as above. Two modules were added,
+`certlab.encoders.multi_aig` and `certlab.encoders.multi_mig`, translated from the research
+scripts that produced the multi-output results cited in README ("How to cite"). The translation
+was checked against the originals by the same AST-equality procedure as phase 1 (2/2 modules
+equal after the declared changes below; the check rejects a planted one-token code change in
+either module), and the record is kept with the research repository.
+
+Declared code changes with respect to the originals:
+
+| change | where | why |
+|---|---|---|
+| `assert` verdict guards (decode, witness re-simulation, kissat exit code, fence sum) are exceptions | both | `python -O` strips asserts; same fix as phase 1 |
+| input x_j read as bit j-1 of the row index (was bit n-j) | `multi_aig` | the certlab convention; minimum sizes are invariant under a permutation of the inputs, so only how a decoded circuit is read changes |
+| `symbreak` (gate-ordering ladder) removed | `multi_mig` | the ladder only implies its order variables, so setting them all true satisfies it: it constrained nothing; no certificate used it |
+| dead assignment removed in `sum_tts` | `multi_mig` | overwritten on the next line |
+
+The multi-output MIG encoder keeps its stricter kissat reading: both the `s SATISFIABLE` /
+`s UNSATISFIABLE` line and the matching exit code are required, otherwise `RuntimeError`.
+
+New tests (`tests/test_multi_output.py`, plus probes in `tests/defect_probes.py`):
+
+| test | what it checks |
+|---|---|
+| `test_independent_check_rejects_a_flipped_output` | `simulate.check_multi` rejects a witness with one output polarity flipped, and one with an output missing |
+| `test_independent_check_is_sensitive_to_the_bit_convention` | an asymmetric two-output witness checks under the certlab convention and fails under the inverted one, in both bases |
+| `test_one_gate_below_the_optimum_is_unsat` | full adder: no 6-AND AIG, no 2-MAJ MIG |
+| `test_mig_full_adder_and_half_adder` | SUM_3 = 3 and SUM_2 = 3 MAJ gates, witnesses checked independently |
+| `test_mig_fences_partition_the_search` | 2^(k-1) fences; over all fences, SUM_3 is UNSAT at k = 2 and SAT at k = 3 |
+| `test_mig_input_symmetry_break_keeps_the_optimum` | with `sym_inputs`, SUM_3 is still UNSAT at 2 and SAT at 3 |
+| `test_mig_sum5_has_no_six_gate_circuit` | SUM_5 at k = 6 is UNSAT, no symmetry breaking (~15 s) |
+| `test_mig_par5_is_six` (slow) | PAR_5 through the multi-output encoder with one output: UNSAT at 5, SAT at 6 |
+| `test_aig_audit_rows` | six rows of an exhaustive audit of a published multi-output AIG database at n = 3: UNSAT at the exact size minus one, SAT at the exact size, below the database's size |
+| `test_aig_full_adder_is_seven` | SUM_3 = 7 AND gates |
+| `test_one_output_reproduces_single_output` | with one output, both encoders give the single-output size on 15 functions of n = 3 |
+| `test_f_and_not_f_cost_opt_f` | (f, NOT f) costs the size of f, both bases |
+| `test_trivial_multi_both_encoders` | k = 0 detection, positive and negative |
+| probes `solver_failure_multi_*`, `bad_model_multi_*`, `decode_two_options_multi_*`, `decode_two_output_nodes_multi_*`, `fence_must_sum_to_k_multi_mig` | every guard raises, with and without `python3 -O` (fake kissat in four failure modes; a decodable SAT model that computes NOR for an AND target) |
+
+The test functions themselves use plain `assert` (pytest); the `python3 -O` coverage is the
+probes, which run in a subprocess. Leak scan after the change: `scrub_check: 0 finding(s)`, and a
+planted name in each of the three new files is detected (rc 1).
+
+Full run, including the slow tests (`python3 -m pytest -q --durations=8 tests`):
+
+```
+129 passed in 339.20s (0:05:39)
+119.71s call     tests/test_multi_output.py::test_mig_par5_is_six
+80.58s call     tests/test_npn.py::test_full_validation
+41.82s call     tests/test_reverify_and_chain.py::test_witness_flagship_n5_quick
+31.56s call     tests/test_gates.py::test_gate[gate_mig.py-GATE M1+M2: PASSED]
+15.29s call     tests/test_multi_output.py::test_mig_sum5_has_no_six_gate_circuit
+```
+
+Not covered: SUM_5 = 9 itself (the k = 8 UNSAT took hours and a 59 GB proof), SUM_6 and SUM_7,
+DRAT certification of multi-output lower bounds (the encoders write plain CNF; nothing in the
+multi-output path calls drat-trim yet), and a multi-output CLI.
