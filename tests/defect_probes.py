@@ -18,6 +18,8 @@ IMPORTS_NEW = {
     "aig": "from certlab.encoders import aig as M",
     "xag": "from certlab.encoders import xag as M",
     "mig": "from certlab.encoders import mig as M",
+    "multi_aig": "from certlab.encoders import multi_aig as M",
+    "multi_mig": "from certlab.encoders import multi_mig as M",
     "npn": "from certlab import npn as M",
     "forced_multi": "from certlab.certify import forced_multi as M",
     "witness": "from certlab import witness as M",
@@ -88,6 +90,45 @@ for _b, _cls, _idx in (("aig", "AIGEncoder", 4), ("xag", "XAGEncoder", 5), ("mig
         f"enc = M.{_cls}(2, 1, 0b1000).build()\n"
         f"two = [o[{_idx}] for o in enc.options[1]][:2]\n"
         + _TRY.format(call="enc.decode(two)"))
+
+# Phase 2, multi-output encoders: the same three guards (solver failure, SAT model that does not
+# compute the tables, decode of an ambiguous model), plus a fence that does not sum to k.
+for _b in ("multi_aig", "multi_mig"):
+    PROBES[f"solver_failure_{_b}"] = (_b, "{imp}\n" + _TRY.format(call="M.solve_k(2, [0b1000], 1)"))
+
+# The fake model selects NOR(x1, x2) for gate 1 and routes output 0 to gate 1 (node 3), for an
+# AND target: decodable, but wrong on every row.
+_BAD_MODEL_MULTI = """
+import os
+{imp}
+enc = M.{cls}(2, 1, [0b1000]).build()
+sel = [o for o in enc.options[1] if {pred}][0][{idx}]
+lits = [sel] + [-o[{idx}] for o in enc.options[1] if o[{idx}] != sel]
+lits += [enc.osel[(0, 3)]] + [-v for (o, nd), v in enc.osel.items() if (o, nd) != (0, 3)]
+lits += [-enc.opol[0]]
+p = os.path.join(os.environ["FAKEBIN"], "kissat")
+open(p, "w").write("#!/bin/sh\\necho 's SATISFIABLE'\\necho 'v " + " ".join(map(str, lits)) + " 0'\\nexit 10\\n")
+os.chmod(p, 0o755)
+""" + _TRY.format(call="M.solve_k(2, [0b1000], 1{extra})")
+PROBES["bad_model_multi_aig"] = ("multi_aig", _BAD_MODEL_MULTI.replace("{cls}", "MultiAIGEncoder")
+                                 .replace("{pred}", "o[1] == 1 and o[3] == 1").replace("{idx}", "4")
+                                 .replace("{extra}", ""))
+PROBES["bad_model_multi_mig"] = ("multi_mig", _BAD_MODEL_MULTI.replace("{cls}", "MultiMIGEncoder")
+                                 .replace("{pred}", "o[:6] == (0, 0, 1, 1, 2, 1)").replace("{idx}", "6")
+                                 .replace("{extra}", ", return_circuit=True"))
+
+for _b, _cls, _idx in (("multi_aig", "MultiAIGEncoder", 4), ("multi_mig", "MultiMIGEncoder", 6)):
+    PROBES[f"decode_two_options_{_b}"] = (_b, "{imp}\n"
+        f"enc = M.{_cls}(2, 1, [0b1000]).build()\n"
+        f"two = [o[{_idx}] for o in enc.options[1]][:2] + [enc.osel[(0, 3)]]\n"
+        + _TRY.format(call="enc.decode(two)"))
+    PROBES[f"decode_two_output_nodes_{_b}"] = (_b, "{imp}\n"
+        f"enc = M.{_cls}(2, 1, [0b1000]).build()\n"
+        f"one = [o[{_idx}] for o in enc.options[1]][:1] + [enc.osel[(0, 3)], enc.osel[(0, 1)]]\n"
+        + _TRY.format(call="enc.decode(one)"))
+
+PROBES["fence_must_sum_to_k_multi_mig"] = ("multi_mig", "{imp}\n" + _TRY.format(
+    call="M.MultiMIGEncoder(3, 3, M.sum_tts(3), fence=(1, 1))"))
 
 # D1: NPN validation must reject a census whose representative is not canonical.
 PROBES["npn_validate_corrupt_csv"] = ("npn", """

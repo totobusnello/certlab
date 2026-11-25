@@ -32,6 +32,16 @@ and the result is UNSAT with a DRAT proof, with no symmetry breaking.
 This is release 0.1.0 (phase 1, single-output). Multi-output encoders, depth-bounded encoders,
 multiplicative complexity and VeriPB-certified symmetry breaking are not included.
 
+Unreleased (phase 2): multi-output AIG and MIG encoders, `certlab.encoders.multi_aig` and
+`certlab.encoders.multi_mig` (Python API; see CHANGELOG and TESTING.md, section 4):
+
+```python
+from certlab.encoders.multi_mig import opt_multi_via_sat, sum_tts
+opt_multi_via_sat(3, sum_tts(3), kmax=4)   # 3: MIG size of the full adder (sum and carry)
+from certlab.encoders.multi_aig import opt_multi
+opt_multi(3, sum_tts(3))                   # 7: AIG size of the full adder
+```
+
 ## Installation
 
 Requirements: Python 3.9 or later, and two binaries on `PATH`:
