@@ -147,8 +147,8 @@ the one whose results you reproduce, and this package for the software:
 
 The software itself: L. A. Busnello, *certlab*, Zenodo, concept DOI
 [10.5281/zenodo.23420660](https://doi.org/10.5281/zenodo.23420660), which resolves to the latest
-version (0.1.0 is [10.5281/zenodo.23420661](https://doi.org/10.5281/zenodo.23420661); metadata in
-`CITATION.cff`).
+version (0.2.0 is [10.5281/zenodo.24563931](https://doi.org/10.5281/zenodo.24563931), 0.1.0 is
+[10.5281/zenodo.23420661](https://doi.org/10.5281/zenodo.23420661); metadata in `CITATION.cff`).
 
 The MIG results replicate the exact-synthesis catalogue of M. Soeken, L. G. Amarù,
 P.-E. Gaillardon and G. De Micheli, "Optimizing Majority-Inverter Graphs with Functional Hashing",

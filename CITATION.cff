@@ -18,6 +18,10 @@ license: MIT
 version: 0.2.0
 date-released: 2026-11-26
 doi: 10.5281/zenodo.23420660
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24563931
+    description: "Version 0.2.0 (the concept DOI above resolves to the latest version)"
 repository-code: "https://github.com/totobusnello/certlab"
 keywords:
   - exact synthesis
