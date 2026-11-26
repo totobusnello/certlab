@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased (phase 2, multi-output)
+## 0.2.0 (2026-11-26)
+
+Phase 2, multi-output.
 
 - Encoders: multi-output AIG (`certlab.encoders.multi_aig`) and multi-output MIG
   (`certlab.encoders.multi_mig`, with `sum_tts`, optional fences and an optional
@@ -14,6 +16,10 @@
   change, decoded circuits are now read in the certlab convention); the gate-ordering symmetry
   break of the multi-output MIG encoder (`symbreak`) is removed, since it constrained nothing and
   no certificate used it.
+- Not included in this release: a multi-output XAG encoder, a command-line entry point for the
+  multi-output encoders, and a DRAT-certified lower-bound path for them. Multi-output minimum
+  sizes returned by `opt_multi` / `opt_multi_via_sat` rest on the solver's UNSAT answer, not on a
+  checked proof.
 
 ## 0.1.0 (2026-10-16)
 
