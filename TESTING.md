@@ -186,7 +186,7 @@ sys 19,33
 EXIT=0
 ```
 
-## 4. Phase 2, multi-output encoders (unreleased)
+## 4. Phase 2, multi-output encoders (0.2.0)
 
 Recorded on 2026-11-25, same machine and toolchain as above. Two modules were added,
 `certlab.encoders.multi_aig` and `certlab.encoders.multi_mig`, translated from the research

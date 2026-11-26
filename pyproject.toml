@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "certlab"
-version = "0.1.0"
+version = "0.2.0"
 description = "Exact synthesis of small Boolean circuits (AIG, XAG, MIG) by SAT, with DRAT-certified lower bounds"
 readme = "README.md"
 license = { text = "MIT" }

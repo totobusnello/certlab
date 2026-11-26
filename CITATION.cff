@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below, and cite the archiv
 title: "certlab: exact synthesis of small Boolean circuits by SAT, with DRAT-certified lower bounds"
 abstract: >-
   SAT encoders for exact synthesis of single-output Boolean functions in the AIG, XAG and MIG
-  bases (circuit and formula modes), a certification chain whose lower bounds are UNSAT results
+  bases (circuit and formula modes) and of multi-output functions in the AIG and MIG bases, a certification chain whose lower bounds are UNSAT results
   with drat-trim-verified DRAT proofs, NPN canonicalisation for 4-input functions, and scripts
   that regenerate published forced-reconvergence witnesses from scratch.
 authors:
@@ -12,9 +12,9 @@ authors:
     affiliation: "Independent Researcher"
 type: software
 license: MIT
-version: 0.1.0
-date-released: 2026-10-16
-doi: 10.5281/zenodo.23420661
+version: 0.2.0
+date-released: 2026-11-26
+doi: 10.5281/zenodo.23420660
 repository-code: "https://github.com/totobusnello/certlab"
 keywords:
   - exact synthesis

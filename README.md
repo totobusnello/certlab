@@ -29,11 +29,11 @@ show that every size-optimal AIG of a given function has at least two reconverge
 multiple reconvergence"): the at-most-one-shared constraint is added to the encoding at `k = opt`
 and the result is UNSAT with a DRAT proof, with no symmetry breaking.
 
-This is release 0.1.0 (phase 1, single-output). Multi-output encoders, depth-bounded encoders,
+This is release 0.2.0: the single-output chain of 0.1.0 plus multi-output AIG and MIG encoders,
+`certlab.encoders.multi_aig` and `certlab.encoders.multi_mig` (Python API; see CHANGELOG and
+TESTING.md, section 4). Multi-output minimum sizes rest on the solver's UNSAT answer; the DRAT
+chain covers the single-output encoders only. A multi-output XAG encoder, depth-bounded encoders,
 multiplicative complexity and VeriPB-certified symmetry breaking are not included.
-
-Unreleased (phase 2): multi-output AIG and MIG encoders, `certlab.encoders.multi_aig` and
-`certlab.encoders.multi_mig` (Python API; see CHANGELOG and TESTING.md, section 4):
 
 ```python
 from certlab.encoders.multi_mig import opt_multi_via_sat, sum_tts
@@ -132,8 +132,10 @@ the one whose results you reproduce, and this package for the software:
   1.0.2, [10.5281/zenodo.23375519](https://doi.org/10.5281/zenodo.23375519): the DRAT verdict
   script.
 
-The software itself: L. A. Busnello, *certlab* 0.1.0, Zenodo,
-[10.5281/zenodo.23420661](https://doi.org/10.5281/zenodo.23420661) (metadata in `CITATION.cff`).
+The software itself: L. A. Busnello, *certlab*, Zenodo, concept DOI
+[10.5281/zenodo.23420660](https://doi.org/10.5281/zenodo.23420660), which resolves to the latest
+version (0.1.0 is [10.5281/zenodo.23420661](https://doi.org/10.5281/zenodo.23420661); metadata in
+`CITATION.cff`).
 
 The MIG results replicate the exact-synthesis catalogue of M. Soeken, L. G. Amarù,
 P.-E. Gaillardon and G. De Micheli, "Optimizing Majority-Inverter Graphs with Functional Hashing",
