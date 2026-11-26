@@ -190,7 +190,9 @@ EXIT=0
 
 Recorded on 2026-11-25, same machine and toolchain as above. Two modules were added,
 `certlab.encoders.multi_aig` and `certlab.encoders.multi_mig`, translated from the research
-scripts that produced the multi-output results cited in README ("How to cite"). The translation
+scripts that produced the multi-output results cited in README ("How to cite"):
+`multi_aig_exact.py` in [10.5281/zenodo.23375519](https://doi.org/10.5281/zenodo.23375519) and
+`multi_mig_exact.py` in [10.5281/zenodo.23382607](https://doi.org/10.5281/zenodo.23382607). The translation
 was checked against the originals by the same AST-equality procedure as phase 1 (2/2 modules
 equal after the declared changes below; the check rejects a planted one-token code change in
 either module), and the record is kept with the research repository.
@@ -204,8 +206,9 @@ Declared code changes with respect to the originals:
 | `symbreak` (gate-ordering ladder) removed | `multi_mig` | the ladder only implies its order variables, so setting them all true satisfies it: it constrained nothing; no certificate used it |
 | dead assignment removed in `sum_tts` | `multi_mig` | overwritten on the next line |
 
-The multi-output MIG encoder keeps its stricter kissat reading: both the `s SATISFIABLE` /
-`s UNSATISFIABLE` line and the matching exit code are required, otherwise `RuntimeError`.
+The multi-output MIG encoder kept the stricter kissat reading of its original (a status line and
+the matching exit code). After the review below, both multi-output encoders read the verdict the
+same way, stricter than either original (section 4.1).
 
 New tests (`tests/test_multi_output.py`, plus probes in `tests/defect_probes.py`):
 
@@ -219,7 +222,7 @@ New tests (`tests/test_multi_output.py`, plus probes in `tests/defect_probes.py`
 | `test_mig_input_symmetry_break_keeps_the_optimum` | with `sym_inputs`, SUM_3 is still UNSAT at 2 and SAT at 3 |
 | `test_mig_sum5_has_no_six_gate_circuit` | SUM_5 at k = 6 is UNSAT, no symmetry breaking (~15 s) |
 | `test_mig_par5_is_six` (slow) | PAR_5 through the multi-output encoder with one output: UNSAT at 5, SAT at 6 |
-| `test_aig_audit_rows` | six rows of an exhaustive audit of a published multi-output AIG database at n = 3: UNSAT at the exact size minus one, SAT at the exact size, below the database's size |
+| `test_aig_audit_rows` | six rows of an exhaustive audit of a published multi-output AIG database at n = 3: UNSAT at the exact size minus one, SAT at the exact size (the database's size is a fixture value, not recomputed); extended in 4.1 |
 | `test_aig_full_adder_is_seven` | SUM_3 = 7 AND gates |
 | `test_one_output_reproduces_single_output` | with one output, both encoders give the single-output size on 15 functions of n = 3 |
 | `test_f_and_not_f_cost_opt_f` | (f, NOT f) costs the size of f, both bases |
@@ -244,3 +247,47 @@ Full run, including the slow tests (`python3 -m pytest -q --durations=8 tests`):
 Not covered: SUM_5 = 9 itself (the k = 8 UNSAT took hours and a 59 GB proof), SUM_6 and SUM_7,
 DRAT certification of multi-output lower bounds (the encoders write plain CNF; nothing in the
 multi-output path calls drat-trim yet), and a multi-output CLI.
+
+### 4.1 Review fixes before release (2026-11-26)
+
+Two read-only reviews of the 0.2.0 candidate (models of two other families, under the author's
+direction) reported the defects below; each was reproduced before it was fixed, and each fix has a
+test that fails on the candidate and passes now.
+
+| defect in the candidate | where | fix |
+|---|---|---|
+| an iterator of tables was consumed by the k = 0 test, so the encoder saw fewer outputs: `opt_multi(2, iter([6, 8]))` returned 1 (the answer is 3) | both | the tables are read once into a list on entry (`_multi_common.check_tables`) |
+| a table larger than 2^(2^n) was read on its low bits: `opt_multi(2, [24])` returned 1 | both | `0 <= tt < 2**(2**n)`, `n >= 1` and at least one output are required (`ValueError`) |
+| `fence=()` was read as "no fence": `solve_k(2, [8], 1, fence=())` searched unrestricted and returned SAT; levels of size 0 were accepted | `multi_mig` | `None` means no fence; any other value must be an ordered partition of k into non-empty levels (`ValueError`) |
+| the verdict was read by substring over the whole output: a comment quoting `s UNSATISFIABLE` turned a SAT run into UNSAT (MIG), and exit code 10 was accepted without a status line (AIG) | both | exactly one status line (a line starting with `s `), agreeing with the exit code, else `RuntimeError` (`_multi_common.kissat_verdict`) |
+| `check_multi` validated the basis inside the gate loop, so with no gates it accepted `"xag"`; the encoders' `verify_multi` accepted more outputs than tables | `simulate`, both | basis checked first; `len(outs) == len(tts)` required |
+| SAT answers were checked only by each encoder's own simulator, and `multi_mig.solve_k` did not decode at all unless `return_circuit=True` | both | every SAT answer is decoded and checked by `verify_multi` and by the independent `certlab.simulate.check_multi` before it is reported; `return_circuit` only decides what is returned, and the `verify` argument of `opt_multi_via_sat` is removed |
+
+Tests added or tightened:
+
+| test | what it checks |
+|---|---|
+| `test_an_iterator_of_tables_gives_the_same_answer_as_a_list` | XOR and AND of two inputs cost 3 in both bases, with the tables given as an iterator |
+| `test_tables_out_of_range_are_rejected` | `[24]`, `[-1]`, `[8, 16]` at n = 2, n = 0, and no outputs raise `ValueError` in every entry point of both encoders |
+| `test_invalid_fences_are_rejected` | `()` for k = 1, levels of size 0 or negative, and a wrong sum raise `ValueError` |
+| `test_check_multi_rejects_an_unsupported_basis_even_without_gates`, `test_verify_multi_requires_one_output_per_table` | the two acceptance gaps above |
+| `test_mig_fence_restricts_the_search` | discriminating control: SUM_3 at k = 3 is UNSAT under the fence (3,) and SAT under (1, 1, 1), witness checked independently |
+| `test_mig_input_symmetry_break_constrains_the_first_gate` | with inputs 1 and 2 symmetric, every option of gate 1 that reads x_2 without x_1 gets a unit clause, and the plain encoding has none |
+| `test_aig_audit_rows`, `test_mig_par5_is_six` | UNSAT at every k below the stated minimum, not only at k - 1: exact-k satisfiability is not monotone in k here, since every gate must be used |
+| `test_one_output_reproduces_single_output`, `test_f_and_not_f_cost_opt_f` | compared with fixed reference sizes (`REF_N3`) instead of only encoder against encoder |
+| probes `verdict_*_multi_aig`, `verdict_*_multi_mig` | fake kissat with a correct model: a comment quoting a status is ignored (SAT returned); a missing status line, two status lines, or a status that contradicts the exit code raise `RuntimeError` |
+| all probes | each probe now pins the exception type and the start of the guard's message (`defect_probes.EXPECT`), so an unrelated error in the call does not pass for the guard |
+
+Full run after the fixes, in a working copy (`python3 -m pytest -q --durations=8 tests`, then the
+same under `python3 -O`):
+
+```
+1 failed, 159 passed in 652.05s (0:10:52)
+1 failed, 159 passed, 1 warning in 709.16s (0:11:49)     # python3 -O
+237.83s call     tests/test_multi_output.py::test_mig_par5_is_six
+```
+
+The one failure, in both runs, is `test_scrub_package_is_clean` reading the working copy's `.git`
+pointer file, which holds a local path and is not part of the package; on a `git archive` export
+of the commit the scan reports 0 findings and `tests/test_tools.py` passes.
+

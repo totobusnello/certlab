@@ -115,6 +115,8 @@ def simulate_multi(basis, n, gates, outs, convention="lsb"):
     output o is the table of `node`, complemented when pol is true. Unlike the single-output
     simulators, an empty gate list is allowed (every output is then a constant or a literal).
     """
+    if basis not in ("aig", "mig"):
+        raise ValueError(f"unknown multi-output basis {basis!r}; expected 'aig' or 'mig'")
     m = _mask(n)
     val = _node_tables(n, convention)
     val[0] = 0

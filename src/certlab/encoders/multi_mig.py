@@ -22,6 +22,11 @@ Two optional reductions of the search, both off by default:
   encoding, not something this module checks; a lower bound proved with it is conditional on that
   lemma. The certification chain in certlab does not use it.
 
+Every SAT answer is decoded and checked twice before it is reported: by `verify_multi` below,
+which shares the encoder's conventions, and by certlab.simulate.check_multi, which imports nothing
+from the encoders. Lower bounds (UNSAT) rest on kissat's verdict; this module writes plain CNF and
+produces no DRAT proof.
+
 Library use:
     from certlab.encoders.multi_mig import opt_multi_via_sat, sum_tts
     opt_multi_via_sat(3, sum_tts(3), kmax=4)   # -> 3, the full adder
@@ -30,6 +35,9 @@ import subprocess
 import tempfile
 import os
 from itertools import combinations
+
+from certlab.simulate import check_multi
+from certlab.encoders._multi_common import check_tables, kissat_verdict
 
 
 def tt_bit(tt, t):
@@ -87,10 +95,16 @@ def levels_of(fence):
 class MultiMIGEncoder:
     def __init__(self, n, k, tts, fence=None, sym_inputs=None):
         self.n, self.k = n, k
+        # `fence=None` means no fence; any other value, the empty tuple included, is a fence and
+        # must be an ordered partition of k into non-empty levels.
+        if fence is not None:
+            fence = tuple(fence)
+            if any(not isinstance(s, int) or s < 1 for s in fence):
+                raise ValueError(f"fence {fence}: every level needs at least one gate")
         self.fence = fence
         # groups of mutually symmetric inputs, e.g. [[1,2,3,4,5]] for SUM_5
         self.sym_inputs = sym_inputs or []
-        self.tts = list(tts)
+        self.tts = check_tables(n, tts)
         self.m = len(self.tts)
         self.rows = 1 << n
         self.nvars = 0
@@ -99,8 +113,8 @@ class MultiMIGEncoder:
         self.v = {(i, t): self._new() for i in range(1, k + 1) for t in range(self.rows)}
         # nodes: 0 = constant; 1..n = inputs; n+j = gate j
         self.options = {}
-        level = levels_of(fence) if fence else None
-        if fence:
+        level = levels_of(fence) if fence is not None else None
+        if fence is not None:
             if sum(fence) != k:
                 raise ValueError(f"fence {fence} does not sum to {k}")
             # last gate of each level, to know what each level "sees"
@@ -110,7 +124,7 @@ class MultiMIGEncoder:
                 last_of_level[lv] = acc
         for i in range(1, k + 1):
             opts = []
-            if fence:
+            if fence is not None:
                 # A gate on level L sees the constant, the inputs, and the gates of STRICTLY
                 # earlier levels, and, for L>1, must USE at least one gate of level L-1.
                 #
@@ -296,6 +310,8 @@ def simulate_multi(n, gates, outs, t):
 
 
 def verify_multi(n, tts, gates, outs):
+    if len(outs) != len(tts):
+        return False
     for t in range(1 << n):
         got = simulate_multi(n, gates, outs, t)
         for o, tt in enumerate(tts):
@@ -306,6 +322,7 @@ def verify_multi(n, tts, gates, outs):
 
 def trivial_multi(n, tts):
     """Is k = 0 enough? Every output must be a constant or a +/- literal."""
+    tts = check_tables(n, tts)
     rows = 1 << n
     mask = (1 << rows) - 1
     cands = {0, mask}
@@ -317,6 +334,14 @@ def trivial_multi(n, tts):
 
 def solve_k(n, tts, k, return_circuit=False, timeout=None,
             fence=None, sym_inputs=None):
+    """Is there a multi-output MIG with k MAJ gates for `tts`? Returns (sat, circuit or None).
+
+    The verdict needs exactly one kissat status line agreeing with the exit code (10 = SAT,
+    20 = UNSAT); anything else raises RuntimeError (see _multi_common.kissat_verdict). A SAT model
+    is always decoded and checked by verify_multi and by the independent
+    certlab.simulate.check_multi; `return_circuit` only decides whether the circuit is returned.
+    """
+    tts = check_tables(n, tts)
     enc = MultiMIGEncoder(n, k, tts, fence=fence,
                           sym_inputs=sym_inputs).build()
     if any(len(cl) == 0 for cl in enc.clauses):
@@ -332,18 +357,9 @@ def solve_k(n, tts, k, return_circuit=False, timeout=None,
     finally:
         os.unlink(path)
     # A missing "s SATISFIABLE" is NOT UNSAT: a crash, an out-of-memory kill and a missing binary
-    # all end up here. The explicit verdict line AND the DIMACS exit code (10 = SAT, 20 = UNSAT)
-    # are both required.
-    _sat = "s SATISFIABLE" in r.stdout
-    _uns = "s UNSATISFIABLE" in r.stdout
-    if not ((_sat and r.returncode == 10) or (_uns and r.returncode == 20)):
-        raise RuntimeError(
-            f"kissat gave no verdict: returncode={r.returncode}, "
-            f"SAT={_sat}, UNSAT={_uns}, stderr[:200]={r.stderr[:200]!r}")
-    if _uns:
+    # all end up here (kissat_verdict raises).
+    if not kissat_verdict(r):
         return False, None
-    if not return_circuit:
-        return True, None
     model = []
     for line in r.stdout.splitlines():
         if line.startswith("v "):
@@ -351,15 +367,19 @@ def solve_k(n, tts, k, return_circuit=False, timeout=None,
     gates, outs = enc.decode(model)
     if not verify_multi(n, tts, gates, outs):
         raise RuntimeError("SAT model does not reproduce the truth tables")
-    return True, (gates, outs)
+    if not check_multi("mig", n, tts, gates, outs):
+        raise RuntimeError("SAT model rejected by the independent simulator (certlab.simulate)")
+    return True, ((gates, outs) if return_circuit else None)
 
 
-def opt_multi_via_sat(n, tts, kmax=16, timeout=None, verify=True):
-    """Smallest k such that a multi-output MIG for `tts` exists. None if not closed by kmax."""
+def opt_multi_via_sat(n, tts, kmax=16, timeout=None):
+    """Smallest k such that a multi-output MIG for `tts` exists, by an ascending search from
+    k = 0; None if no k <= kmax is SAT. Every SAT answer is decoded and checked (see solve_k)."""
+    tts = check_tables(n, tts)
     if trivial_multi(n, tts):
         return 0
     for k in range(1, kmax + 1):
-        sat, _ = solve_k(n, tts, k, return_circuit=verify, timeout=timeout)
+        sat, _ = solve_k(n, tts, k, timeout=timeout)
         if sat:
             return k
     return None

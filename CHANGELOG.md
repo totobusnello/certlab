@@ -16,6 +16,13 @@ Phase 2, multi-output.
   change, decoded circuits are now read in the certlab convention); the gate-ordering symmetry
   break of the multi-output MIG encoder (`symbreak`) is removed, since it constrained nothing and
   no certificate used it.
+- Fixed before release, after review (TESTING.md, section 4.1): an iterator of tables lost outputs;
+  out-of-range tables were read on their low bits; `fence=()` and empty levels were accepted;
+  the kissat verdict is now read from exactly one status line that must agree with the exit code,
+  in both multi-output encoders; `check_multi` rejects an unsupported basis even with no gates, and
+  `verify_multi` requires one output per table. Every SAT answer of the multi-output encoders is
+  decoded and checked by the independent `certlab.simulate.check_multi` before it is reported;
+  the `verify` argument of `opt_multi_via_sat` is removed.
 - Not included in this release: a multi-output XAG encoder, a command-line entry point for the
   multi-output encoders, and a DRAT-certified lower-bound path for them. Multi-output minimum
   sizes returned by `opt_multi` / `opt_multi_via_sat` rest on the solver's UNSAT answer, not on a

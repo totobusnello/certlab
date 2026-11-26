@@ -18,11 +18,19 @@ independent simulator certlab.simulate.check_multi checks it in that convention.
 
 Validation, run by the test suite: with m = 1 the encoder reproduces the single-output AIG size,
 and (f, ~f) costs opt(f).
+
+Every SAT answer is decoded and checked twice before it is returned: by `verify_multi` below, which
+shares the encoder's conventions, and by certlab.simulate.check_multi, which imports nothing from
+the encoders. Lower bounds (UNSAT) rest on kissat's verdict; this module writes plain CNF and
+produces no DRAT proof.
 """
 import subprocess
 import tempfile
 import os
 from itertools import combinations
+
+from certlab.simulate import check_multi
+from certlab.encoders._multi_common import check_tables, kissat_verdict
 
 
 def tt_bit(tt, t):
@@ -32,7 +40,7 @@ def tt_bit(tt, t):
 class MultiAIGEncoder:
     def __init__(self, n, k, tts):
         self.n, self.k = n, k
-        self.tts = list(tts)
+        self.tts = check_tables(n, tts)
         self.m = len(self.tts)
         self.rows = 1 << n
         self.nvars = 0
@@ -162,6 +170,8 @@ def simulate_multi(n, gates, outs, t):
 
 
 def verify_multi(n, tts, gates, outs):
+    if len(outs) != len(tts):
+        return False
     for t in range(1 << n):
         got = simulate_multi(n, gates, outs, t)
         for o, tt in enumerate(tts):
@@ -172,6 +182,7 @@ def verify_multi(n, tts, gates, outs):
 
 def trivial_multi(n, tts):
     """Is k = 0 enough? Every output must be a constant or a +/- literal."""
+    tts = check_tables(n, tts)
     rows = 1 << n
     mask = (1 << rows) - 1
     cands = {0, mask}
@@ -186,8 +197,11 @@ def trivial_multi(n, tts):
 def solve_k(n, tts, k, timeout=None):
     """Is there a multi-output AIG with k AND gates for `tts`? Returns (sat, (gates, outs) or None).
 
-    kissat exit code 10 = SAT, 20 = UNSAT; any other exit code raises RuntimeError (neither
-    verdict). A SAT model is decoded and re-simulated before it is returned."""
+    The verdict needs exactly one kissat status line agreeing with the exit code (10 = SAT,
+    20 = UNSAT); anything else raises RuntimeError (see _multi_common.kissat_verdict). A SAT model
+    is decoded and checked by verify_multi and by the independent certlab.simulate.check_multi
+    before it is returned."""
+    tts = check_tables(n, tts)
     enc = MultiAIGEncoder(n, k, tts).build()
     if any(len(cl) == 0 for cl in enc.clauses):
         return False, None
@@ -201,22 +215,25 @@ def solve_k(n, tts, k, timeout=None):
                            text=True, timeout=timeout)
     finally:
         os.unlink(path)
-    if r.returncode == 10:
-        model = []
-        for line in r.stdout.splitlines():
-            if line.startswith("v "):
-                model.extend(int(x) for x in line[2:].split() if x != "0")
-        gates, outs = enc.decode(model)
-        if not verify_multi(n, tts, gates, outs):
-            raise RuntimeError("SAT model does not simulate! bug")
-        return True, (gates, outs)
     # `raise`, not `assert`: with `python -O` a solver failure came back as UNSAT.
-    if r.returncode != 20:
-        raise RuntimeError(f"kissat rc={r.returncode}")
-    return False, None
+    if not kissat_verdict(r):
+        return False, None
+    model = []
+    for line in r.stdout.splitlines():
+        if line.startswith("v "):
+            model.extend(int(x) for x in line[2:].split() if x != "0")
+    gates, outs = enc.decode(model)
+    if not verify_multi(n, tts, gates, outs):
+        raise RuntimeError("SAT model does not reproduce the truth tables")
+    if not check_multi("aig", n, tts, gates, outs):
+        raise RuntimeError("SAT model rejected by the independent simulator (certlab.simulate)")
+    return True, (gates, outs)
 
 
 def opt_multi(n, tts, kmax=15, timeout=None):
+    """Smallest k such that a multi-output AIG for `tts` exists, by an ascending search from
+    k = 0; None if no k <= kmax is SAT."""
+    tts = check_tables(n, tts)
     if trivial_multi(n, tts):
         return 0
     for k in range(1, kmax + 1):
