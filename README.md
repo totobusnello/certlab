@@ -1,9 +1,10 @@
 # certlab
 
-Exact synthesis of small Boolean circuits by SAT, with lower bounds certified by DRAT proofs.
+Exact synthesis of small Boolean circuits by SAT, with lower bounds certified by DRAT proofs for
+single-output functions.
 
 certlab answers questions of the form "what is the smallest circuit computing f?" for
-small single-output functions (the test suite goes up to five inputs; beyond that, what is
+small single-output functions (the synthesis tests go up to five inputs; beyond that, what is
 feasible depends on the function and the solver), in three bases:
 
 - **AIG**: 2-input AND gates, inversions free on every edge (size = number of AND gates);
@@ -18,10 +19,13 @@ A size bound is only as good as its evidence, so the package separates the two d
 
 - **upper bound**: a satisfying assignment is decoded into a circuit and re-simulated on the whole
   truth table by `certlab.simulate`, a simulator separate from the encoders' own (the tests
-  cross-check the two on 900 random circuits);
-- **lower bound**: "no circuit with k gates" is an UNSAT result, certified by a DRAT proof checked
-  with `drat-trim`, and read by one documented verdict (`scripts/check_drat.sh`, exit codes
-  0 verified / 1 not verified / 2 usage / 3 time limit / 4 checker failed).
+  cross-check the two on 900 random single-output circuits, 300 per basis);
+- **lower bound**: "no circuit with k gates" is an UNSAT result. In the certification chain
+  (single-output encoders) it is certified by a DRAT proof checked with `drat-trim`, under one
+  documented verdict contract (`scripts/check_drat.sh`, exit codes 0 verified / 1 not verified /
+  2 usage / 3 time limit / 4 checker failed; the Python chain reads drat-trim the same way).
+  Elsewhere (`certlab synth`, the multi-output encoders) an UNSAT is kissat's answer, not a
+  checked proof.
 
 On top of the encoders, the certification chain proves structural facts about **all** optimal
 circuits of a function, relative to the circuit model the encoding describes. For example, it can
@@ -31,8 +35,9 @@ and the result is UNSAT with a DRAT proof, with no symmetry breaking.
 
 This is release 0.2.0: the single-output chain of 0.1.0 plus multi-output AIG and MIG encoders,
 `certlab.encoders.multi_aig` and `certlab.encoders.multi_mig` (Python API; see CHANGELOG and
-TESTING.md, section 4). Multi-output minimum sizes rest on the solver's UNSAT answer; the DRAT
-chain covers the single-output encoders only. A multi-output XAG encoder, depth-bounded encoders,
+TESTING.md, section 4). Every SAT answer of the multi-output encoders is decoded and checked by
+`certlab.simulate.check_multi`; multi-output minimum sizes rest on the solver's UNSAT answer, and
+the DRAT chain covers the single-output encoders only. A multi-output XAG encoder, depth-bounded encoders,
 multiplicative complexity and VeriPB-certified symmetry breaking are not included.
 
 ```python
@@ -130,7 +135,10 @@ the one whose results you reproduce, and this package for the software:
   (versions 1.0 and 1.1): the n = 4 tables in the three bases.
 - L. A. Busnello, *Exact-synthesis audit of the SPbSAT/simplifier AIG database*, Zenodo, version
   1.0.2, [10.5281/zenodo.23375519](https://doi.org/10.5281/zenodo.23375519): the DRAT verdict
-  script.
+  script and the multi-output AIG encoder (`multi_aig_exact.py`).
+- L. A. Busnello, *Exact majority-inverter graph size of SUM_5 and PAR_5: encoders, CNF hashes, DRAT
+  records and checks*, Zenodo, [10.5281/zenodo.23382607](https://doi.org/10.5281/zenodo.23382607):
+  the multi-output MIG encoder (`multi_mig_exact.py`).
 
 The software itself: L. A. Busnello, *certlab*, Zenodo, concept DOI
 [10.5281/zenodo.23420660](https://doi.org/10.5281/zenodo.23420660), which resolves to the latest
@@ -146,8 +154,9 @@ DATE 2016 (Table I).
 This software was written with AI models, under the author's direction: Anthropic's Claude for
 the code, the encodings and the documentation, and models of other families for read-only review.
 The author is responsible for it. Correctness does not rest on the models: upper bounds are checked
-by simulation, lower bounds by drat-trim, and the encoders are checked against independent
-exhaustive enumerations (tests/).
+by simulation, lower bounds of the certification chain by drat-trim (the other lower bounds are
+kissat's answers, as stated above), and the encoders are checked against independent exhaustive
+enumerations (tests/).
 
 ## Licence
 

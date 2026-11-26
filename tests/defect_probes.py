@@ -6,7 +6,8 @@ Each probe is a small Python program run in a SUBPROCESS, so that it can be run 
     RAISED <ExceptionType> <message>     the guard fired
     RETURNED <value>                     the call came back with a value
 
-The packaged code must print RAISED for every probe, with and without -O.
+The packaged code must print, with and without -O, the prefix that EXPECT gives for the probe
+(RAISED, for a probe not listed there).
 
 `IMPORTS_NEW` binds the module under test to the name M.
 """
@@ -97,7 +98,7 @@ for _b in ("multi_aig", "multi_mig"):
     PROBES[f"solver_failure_{_b}"] = (_b, "{imp}\n" + _TRY.format(call="M.solve_k(2, [0b1000], 1)"))
 
 # The fake model selects NOR(x1, x2) for gate 1 and routes output 0 to gate 1 (node 3), for an
-# AND target: decodable, but wrong on every row.
+# AND target: decodable, but wrong on rows 00 and 11 (NOR and AND agree on 01 and 10).
 _BAD_MODEL_MULTI = """
 import os
 {imp}
@@ -127,6 +128,41 @@ for _b, _cls, _idx in (("multi_aig", "MultiAIGEncoder", 4), ("multi_mig", "Multi
         f"one = [o[{_idx}] for o in enc.options[1]][:1] + [enc.osel[(0, 3)], enc.osel[(0, 1)]]\n"
         + _TRY.format(call="enc.decode(one)"))
 
+# Phase 2, solver verdict (review of 0.2.0): exactly one status line ("s ..."), and it must agree
+# with the exit code. A comment that mentions a verdict is not a status line. The fake kissat
+# prints a CORRECT model for an AND target (gate 1 = AND(x1, x2), output 0 = gate 1), so a probe
+# that is accepted returns SAT with a witness.
+_VERDICT_MULTI = """
+import os
+{imp}
+enc = M.{cls}(2, 1, [0b1000]).build()
+sel = [o for o in enc.options[1] if {pred}][0][{idx}]
+lits = [sel] + [-o[{idx}] for o in enc.options[1] if o[{idx}] != sel]
+lits += [enc.osel[(0, 3)]] + [-v for (o, nd), v in enc.osel.items() if (o, nd) != (0, 3)]
+lits += [-enc.opol[0]]
+model = "v " + " ".join(map(str, lits)) + " 0"
+lines = [l.replace("MODEL", model) for l in {lines}]
+p = os.path.join(os.environ["FAKEBIN"], "kissat")
+open(p, "w").write(chr(10).join(["#!/bin/sh"] + lines) + chr(10))
+os.chmod(p, 0o755)
+""" + _TRY.format(call="M.solve_k(2, [0b1000], 1{extra})")
+_VERDICT_CASES = {
+    # name: lines of the fake kissat ("MODEL" is replaced by the v line of the correct model)
+    "verdict_comment_is_not_a_status_line": [
+        "echo 'c previous run: s UNSATISFIABLE'", "echo 's SATISFIABLE'", "echo 'MODEL'", "exit 10"],
+    "verdict_status_line_missing": ["echo 'MODEL'", "exit 10"],
+    "verdict_two_status_lines": [
+        "echo 's SATISFIABLE'", "echo 's UNSATISFIABLE'", "echo 'MODEL'", "exit 10"],
+    "verdict_disagrees_with_exit_code": ["echo 's UNSATISFIABLE'", "exit 10"],
+}
+for _case, _lines in _VERDICT_CASES.items():
+    for _b, _cls, _pred, _idx, _extra in (
+            ("multi_aig", "MultiAIGEncoder", "o[:4] == (1, 0, 2, 0)", "4", ""),
+            ("multi_mig", "MultiMIGEncoder", "o[:6] == (0, 0, 1, 0, 2, 0)", "6", ", return_circuit=True")):
+        PROBES[f"{_case}_{_b}"] = (_b, _VERDICT_MULTI.replace("{cls}", _cls).replace("{pred}", _pred)
+                                   .replace("{idx}", _idx).replace("{extra}", _extra)
+                                   .replace("{lines}", repr(_lines)))
+
 PROBES["fence_must_sum_to_k_multi_mig"] = ("multi_mig", "{imp}\n" + _TRY.format(
     call="M.MultiMIGEncoder(3, 3, M.sum_tts(3), fence=(1, 1))"))
 
@@ -153,6 +189,34 @@ M.TT, M.N, M.OPT = 0x03DE, 4, 6
 # D5: build_amo_shared without n must not silently pick a module default.
 PROBES["amo_shared_requires_n"] = ("forced_multi", "{imp}\n" + _TRY.format(
     call="(lambda r: (r[0], M.build_amo_shared(0x03de, 6, n=4)[0]))(M.build_amo_shared(0x03de, 6))"))
+
+
+# What each probe must print (prefix). A probe not listed here must print "RAISED"; the listed ones
+# pin the exception type and the guard's message, so an accidental error elsewhere in the call
+# (a TypeError, say) does not pass for the guard.
+EXPECT = {
+    "bad_model_xag": "RAISED RuntimeError SAT model does not simulate",
+    "bad_model_mig": "RAISED RuntimeError SAT model does not simulate",
+    "bad_model_aig": "RAISED RuntimeError REJECTED: the circuit does not match the truth table",
+    "decode_two_options_aig": "RAISED ValueError gate 1: selection is not unique",
+    "decode_two_options_xag": "RAISED ValueError gate 1: 2 active options",
+    "decode_two_options_mig": "RAISED ValueError gate 1: 2 active options",
+    "bad_model_multi_aig": "RAISED RuntimeError SAT model does not reproduce the truth tables",
+    "bad_model_multi_mig": "RAISED RuntimeError SAT model does not reproduce the truth tables",
+    "decode_two_options_multi_aig": "RAISED ValueError gate 1: 2 active options",
+    "decode_two_options_multi_mig": "RAISED ValueError gate 1: 2 active options",
+    "decode_two_output_nodes_multi_aig": "RAISED ValueError output 0: 2 selected nodes",
+    "decode_two_output_nodes_multi_mig": "RAISED ValueError output 0: 2 selected nodes",
+    "fence_must_sum_to_k_multi_mig": "RAISED ValueError fence (1, 1) does not sum to 3",
+    "npn_validate_corrupt_csv": "RAISED ValueError rep 0x0002 (dec=2) is not a fixed point",
+    "witness_leg_solver_failure": "RAISED RuntimeError k=1 expected UNSAT(20), got 1",
+    "amo_shared_requires_n": "RAISED TypeError build_amo_shared: n is required",
+}
+for _b in ("multi_aig", "multi_mig"):
+    EXPECT[f"verdict_comment_is_not_a_status_line_{_b}"] = "RETURNED (True, ("
+    for _case in ("verdict_status_line_missing", "verdict_two_status_lines",
+                  "verdict_disagrees_with_exit_code"):
+        EXPECT[f"{_case}_{_b}"] = "RAISED RuntimeError kissat gave no verdict"
 
 
 def run_probe(name, imports, optimize, env, cwd=None, timeout=600):

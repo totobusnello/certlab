@@ -10,8 +10,13 @@ gate fewer than the optimum), then the controls against values established elsew
   SUM_3 (full adder) = 7 AND gates;
 - with one output, both encoders agree with the single-output encoders.
 
-Every SAT witness is also checked by certlab.simulate.check_multi, which imports nothing from the
-encoders.
+Every SAT answer of the two encoders is decoded and checked by certlab.simulate.check_multi, which
+imports nothing from the encoders (solve_k does it before returning, and raises if the check
+fails); the tests below also call check_multi on the witnesses they keep.
+
+Exact size k is not monotone in k for these encodings (every gate must be used, so a target can be
+SAT at k, UNSAT at k + 1 and SAT again at k + 2), so a test that states a minimum checks every
+smaller k, not only k - 1.
 """
 import itertools
 
@@ -87,6 +92,56 @@ def test_one_gate_below_the_optimum_is_unsat(basis):
         assert multi_mig.solve_k(3, tts, 2) == (False, None)
 
 
+# ---------------------------------------------------------------- inputs the API must refuse
+# (review of 0.2.0: each of these returned a wrong answer before the fix)
+
+@needs_kissat
+def test_an_iterator_of_tables_gives_the_same_answer_as_a_list():
+    # XOR and AND of two inputs: 3 gates in both bases. An iterator used to be consumed by the
+    # k = 0 test, leaving only AND for the encoder (answer 1).
+    assert multi_aig.opt_multi(2, iter([6, 8])) == 3
+    assert multi_mig.opt_multi_via_sat(2, iter([6, 8]), kmax=4) == 3
+    sat, circ = multi_aig.solve_k(2, iter([6, 8]), 3)
+    assert sat and S.check_multi("aig", 2, [6, 8], *circ)
+    sat, circ = multi_mig.solve_k(2, iter([6, 8]), 3, return_circuit=True)
+    assert sat and S.check_multi("mig", 2, [6, 8], *circ)
+
+
+@pytest.mark.parametrize("n,tts", [(2, [24]), (2, [-1]), (2, [8, 16]), (0, [0]), (2, [])])
+def test_tables_out_of_range_are_rejected(n, tts):
+    # [24] has a bit above the 4 rows of n = 2: it used to be read as 8 (one AND gate).
+    for call in (lambda: multi_aig.opt_multi(n, tts),
+                 lambda: multi_aig.solve_k(n, tts, 1),
+                 lambda: multi_aig.trivial_multi(n, tts),
+                 lambda: multi_aig.MultiAIGEncoder(n, 1, tts),
+                 lambda: multi_mig.opt_multi_via_sat(n, tts),
+                 lambda: multi_mig.solve_k(n, tts, 1),
+                 lambda: multi_mig.trivial_multi(n, tts),
+                 lambda: multi_mig.MultiMIGEncoder(n, 1, tts)):
+        with pytest.raises(ValueError):
+            call()
+
+
+@pytest.mark.parametrize("k,fence", [(1, ()), (2, (2, 0)), (2, (1, 0, 1)), (2, (3, -1)), (3, (1, 1))])
+def test_invalid_fences_are_rejected(k, fence):
+    # fence=() used to be read as "no fence", so a 1-gate instance searched unrestricted.
+    with pytest.raises(ValueError):
+        multi_mig.MultiMIGEncoder(2, k, [8], fence=fence)
+
+
+def test_check_multi_rejects_an_unsupported_basis_even_without_gates():
+    with pytest.raises(ValueError):
+        S.check_multi("xag", 2, [10], [], [(1, 0)])
+
+
+def test_verify_multi_requires_one_output_per_table():
+    # AND(x1, x2) as gate 3; two outputs given for one table
+    assert multi_aig.verify_multi(2, [8], [(1, 0, 2, 0)], [(3, False)])
+    assert not multi_aig.verify_multi(2, [8], [(1, 0, 2, 0)], [(3, False), (3, True)])
+    assert multi_mig.verify_multi(2, [8], [(0, 0, 1, 0, 2, 0)], [(3, False)])
+    assert not multi_mig.verify_multi(2, [8], [(0, 0, 1, 0, 2, 0)], [(3, False), (3, True)])
+
+
 # ---------------------------------------------------------------- MIG controls
 
 @needs_kissat
@@ -118,11 +173,35 @@ def test_mig_fences_partition_the_search():
 
 
 @needs_kissat
+def test_mig_fence_restricts_the_search():
+    # Discriminating control: a fence that ignored its argument would give the same answer for
+    # every fence. At k = 3 the full adder fits the fence (1, 1, 1) but not (3,): three gates on
+    # one level read only inputs and the constant, and no majority of literals is XOR_3, the low
+    # bit of SUM_3.
+    tts = multi_mig.sum_tts(3)
+    assert multi_mig.solve_k(3, tts, 3, fence=(3,)) == (False, None)
+    sat, circ = multi_mig.solve_k(3, tts, 3, fence=(1, 1, 1), return_circuit=True)
+    assert sat and S.check_multi("mig", 3, tts, *circ)
+
+
+@needs_kissat
 def test_mig_input_symmetry_break_keeps_the_optimum():
     tts = multi_mig.sum_tts(3)
     assert multi_mig.solve_k(3, tts, 2, sym_inputs=[[1, 2, 3]]) == (False, None)
     sat, circ = multi_mig.solve_k(3, tts, 3, return_circuit=True, sym_inputs=[[1, 2, 3]])
     assert sat and S.check_multi("mig", 3, tts, *circ)
+
+
+def test_mig_input_symmetry_break_constrains_the_first_gate():
+    # Discriminating control: with inputs 1 and 2 symmetric, gate 1 (nothing before it) may not
+    # read x_2 without x_1, so every such option of gate 1 gets the unit clause [-s].
+    tts = multi_mig.sum_tts(3)
+    enc = multi_mig.MultiMIGEncoder(3, 3, tts, sym_inputs=[[1, 2]]).build()
+    units = {cl[0] for cl in enc.clauses if len(cl) == 1}
+    banned = [o[6] for o in enc.options[1] if 2 in (o[0], o[2], o[4]) and 1 not in (o[0], o[2], o[4])]
+    assert banned and all(-s in units for s in banned)
+    plain = multi_mig.MultiMIGEncoder(3, 3, tts).build()
+    assert not {cl[0] for cl in plain.clauses if len(cl) == 1}
 
 
 @needs_kissat
@@ -135,7 +214,9 @@ def test_mig_sum5_has_no_six_gate_circuit():
 @pytest.mark.slow
 def test_mig_par5_is_six():
     # PAR_5 = 6 MAJ gates, through the multi-output encoder with one output (~80 s for k = 5)
-    assert multi_mig.solve_k(5, [PAR5], 5) == (False, None)
+    assert not multi_mig.trivial_multi(5, [PAR5])
+    for k in range(1, 6):
+        assert multi_mig.solve_k(5, [PAR5], k) == (False, None), k
     sat, circ = multi_mig.solve_k(5, [PAR5], 6, return_circuit=True)
     assert sat and S.check_multi("mig", 5, [PAR5], *circ)
 
@@ -143,7 +224,8 @@ def test_mig_par5_is_six():
 # ---------------------------------------------------------------- AIG controls
 
 # Rows of an exhaustive audit of a published multi-output AIG database at n = 3: the database's
-# size, then the exact one. The audit read the tables with x_1 as the most significant bit; the
+# size (a fixture value, copied from the database; it is not recomputed here), then the exact
+# one, which the test establishes. The audit read the tables with x_1 as the most significant bit; the
 # size of a minimum circuit does not depend on the order of the inputs, so the tables are used
 # as they are.
 AUDIT_ROWS = [
@@ -155,8 +237,9 @@ AUDIT_ROWS = [
 @needs_kissat
 @pytest.mark.parametrize("tts,k_db,k_opt", AUDIT_ROWS)
 def test_aig_audit_rows(tts, k_db, k_opt):
-    assert k_opt < k_db
-    assert multi_aig.solve_k(3, tts, k_opt - 1) == (False, None)
+    assert not multi_aig.trivial_multi(3, tts)
+    for k in range(1, k_opt):
+        assert multi_aig.solve_k(3, tts, k) == (False, None), k
     sat, circ = multi_aig.solve_k(3, tts, k_opt)
     assert sat and S.check_multi("aig", 3, tts, *circ)
 
@@ -171,26 +254,31 @@ def test_aig_full_adder_is_seven():
 
 # ---------------------------------------------------------------- agreement with single-output
 
-def _npn3_sample():
-    # one function per NPN class is not needed here; a fixed spread of n = 3 tables suffices
-    return [0x00, 0x01, 0x03, 0x06, 0x07, 0x16, 0x17, 0x18, 0x19, 0x1B, 0x1E, 0x69, 0x6B, 0x96, 0xE8]
+# Fixed reference sizes (AIG, MIG) of a spread of n = 3 functions, so that the tests below compare
+# against integers and not only encoder against encoder. Known anchors among them: 0xE8 = MAJ_3
+# (one MAJ gate, four AND gates), 0x96 = XOR_3 (three MAJ gates, six AND gates).
+REF_N3 = {
+    0x00: (0, 0), 0x01: (2, 2), 0x03: (1, 1), 0x06: (4, 3), 0x07: (2, 2), 0x16: (6, 4),
+    0x17: (4, 1), 0x18: (5, 4), 0x19: (4, 4), 0x1B: (3, 3), 0x1E: (4, 4), 0x69: (6, 3),
+    0x6B: (6, 4), 0x96: (6, 3), 0xE8: (4, 1),
+}
 
 
 @needs_kissat
 def test_one_output_reproduces_single_output():
-    for tt in _npn3_sample():
-        oa = _single_opt(aig.AIGEncoder, aig.trivial_opt, 3, tt)
-        om = _single_opt(mig.MIGEncoder, mig.trivial_opt, 3, tt)
-        assert multi_aig.opt_multi(3, [tt]) == oa, hex(tt)
-        assert multi_mig.opt_multi_via_sat(3, [tt]) == om, hex(tt)
+    for tt, (ra, rm) in REF_N3.items():
+        assert _single_opt(aig.AIGEncoder, aig.trivial_opt, 3, tt) == ra, hex(tt)
+        assert _single_opt(mig.MIGEncoder, mig.trivial_opt, 3, tt) == rm, hex(tt)
+        assert multi_aig.opt_multi(3, [tt]) == ra, hex(tt)
+        assert multi_mig.opt_multi_via_sat(3, [tt]) == rm, hex(tt)
 
 
 @needs_kissat
 def test_f_and_not_f_cost_opt_f():
     for tt in (0x16, 0x69, 0xE8):
-        o = multi_aig.opt_multi(3, [tt])
-        assert multi_aig.opt_multi(3, [tt, tt ^ 0xFF]) == o
-        assert multi_mig.opt_multi_via_sat(3, [tt, tt ^ 0xFF]) == multi_mig.opt_multi_via_sat(3, [tt])
+        ra, rm = REF_N3[tt]
+        assert multi_aig.opt_multi(3, [tt, tt ^ 0xFF]) == ra, hex(tt)
+        assert multi_mig.opt_multi_via_sat(3, [tt, tt ^ 0xFF]) == rm, hex(tt)
 
 
 def test_trivial_multi_both_encoders():

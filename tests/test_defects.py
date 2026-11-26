@@ -1,7 +1,7 @@
 """Regression tests for the defects fixed in the package (TESTING.md, "Defects fixed").
 
-Every probe runs in a subprocess, with and without `python3 -O`, and must hit its guard
-(RAISED).
+Every probe runs in a subprocess, with and without `python3 -O`, and must print the outcome that
+`defect_probes.EXPECT` gives for it (by default, RAISED: the guard fired).
 """
 import os
 import re
@@ -29,7 +29,7 @@ def test_solver_failure_is_never_unsat(tmp_path, probe, mode, optimize):
 def test_guards_survive_optimize(tmp_path, probe, optimize):
     d = D.fake_kissat_dir(str(tmp_path), "exit1") if probe.startswith("witness") else str(tmp_path)
     out = D.run_probe(probe, D.IMPORTS_NEW, optimize, env_with_path_first(d, {"FAKEBIN": d}))
-    assert out.startswith("RAISED"), out
+    assert out.startswith(D.EXPECT.get(probe, "RAISED")), out
 
 
 def test_no_assert_as_verdict_guard_in_package():
