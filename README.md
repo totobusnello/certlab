@@ -17,15 +17,20 @@ formula (`tree`) instead of the smallest circuit (`opt`).
 
 A size bound is only as good as its evidence, so the package separates the two directions:
 
-- **upper bound**: a satisfying assignment is decoded into a circuit and re-simulated on the whole
-  truth table by `certlab.simulate`, a simulator separate from the encoders' own (the tests
-  cross-check the two on 900 random single-output circuits, 300 per basis);
-- **lower bound**: "no circuit with k gates" is an UNSAT result. In the certification chain
-  (single-output encoders) it is certified by a DRAT proof checked with `drat-trim`, under one
-  documented verdict contract (`scripts/check_drat.sh`, exit codes 0 verified / 1 not verified /
-  2 usage / 3 time limit / 4 checker failed; the Python chain reads drat-trim the same way).
-  Elsewhere (`certlab synth`, the multi-output encoders) an UNSAT is kissat's answer, not a
-  checked proof.
+- **upper bound**: a satisfying assignment, decoded into a circuit, is re-simulated on the whole
+  truth table. Both multi-output `solve_k` APIs simulate every decoded SAT witness with
+  `certlab.simulate`, a simulator separate from the encoders' own, before reporting SAT. The
+  single-output encoders re-simulate a decoded circuit with their own simulator (the MIG and XAG
+  encoders decode only when a circuit is requested); `certlab simulate` checks a single-output
+  circuit with `certlab.simulate`, and the tests cross-check it against the encoders' simulators
+  on 900 random single-output circuits, 300 per basis;
+- **lower bound**: "no circuit with k gates" is an UNSAT result. The single-output certification
+  workflow checks DRAT proofs with `drat-trim`, under one documented verdict contract:
+  `scripts/check_drat.sh` (exit codes 0 verified / 1 not verified / 2 usage / 3 time limit /
+  4 checker failed) and `certlab.certify.zc_certify.drat_verify_detailed` classify every case of
+  one shared battery of drat-trim outputs (`tests/drat_battery.py`) the same way. `certlab synth`
+  and multi-output optimization use the solver's verdict for lower bounds: an UNSAT there is
+  kissat's answer, not a checked proof.
 
 On top of the encoders, the certification chain proves structural facts about **all** optimal
 circuits of a function, relative to the circuit model the encoding describes. For example, it can
@@ -35,9 +40,9 @@ and the result is UNSAT with a DRAT proof, with no symmetry breaking.
 
 This is release 0.2.0: the single-output chain of 0.1.0 plus multi-output AIG and MIG encoders,
 `certlab.encoders.multi_aig` and `certlab.encoders.multi_mig` (Python API; see CHANGELOG and
-TESTING.md, section 4). Every SAT answer of the multi-output encoders is decoded and checked by
-`certlab.simulate.check_multi`; multi-output minimum sizes rest on the solver's UNSAT answer, and
-the DRAT chain covers the single-output encoders only. A multi-output XAG encoder, depth-bounded encoders,
+TESTING.md, section 4). Both multi-output `solve_k` APIs independently simulate every decoded SAT
+witness (`certlab.simulate.check_multi`) before reporting SAT; multi-output minimum sizes rest on
+the solver's UNSAT answer, and DRAT certification covers the single-output workflow only. A multi-output XAG encoder, depth-bounded encoders,
 multiplicative complexity and VeriPB-certified symmetry breaking are not included.
 
 ```python

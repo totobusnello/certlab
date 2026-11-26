@@ -30,7 +30,7 @@ import os
 from itertools import combinations
 
 from certlab.simulate import check_multi
-from certlab.encoders._multi_common import check_tables, kissat_verdict
+from certlab.encoders._multi_common import check_size, check_tables, kissat_verdict
 
 
 def tt_bit(tt, t):
@@ -39,8 +39,10 @@ def tt_bit(tt, t):
 
 class MultiAIGEncoder:
     def __init__(self, n, k, tts):
+        n, tts = check_tables(n, tts)
+        k = check_size("k", k)
         self.n, self.k = n, k
-        self.tts = check_tables(n, tts)
+        self.tts = tts
         self.m = len(self.tts)
         self.rows = 1 << n
         self.nvars = 0
@@ -170,6 +172,7 @@ def simulate_multi(n, gates, outs, t):
 
 
 def verify_multi(n, tts, gates, outs):
+    n, tts = check_tables(n, tts)
     if len(outs) != len(tts):
         return False
     for t in range(1 << n):
@@ -182,7 +185,7 @@ def verify_multi(n, tts, gates, outs):
 
 def trivial_multi(n, tts):
     """Is k = 0 enough? Every output must be a constant or a +/- literal."""
-    tts = check_tables(n, tts)
+    n, tts = check_tables(n, tts)
     rows = 1 << n
     mask = (1 << rows) - 1
     cands = {0, mask}
@@ -201,7 +204,8 @@ def solve_k(n, tts, k, timeout=None):
     20 = UNSAT); anything else raises RuntimeError (see _multi_common.kissat_verdict). A SAT model
     is decoded and checked by verify_multi and by the independent certlab.simulate.check_multi
     before it is returned."""
-    tts = check_tables(n, tts)
+    n, tts = check_tables(n, tts)
+    k = check_size("k", k)
     enc = MultiAIGEncoder(n, k, tts).build()
     if any(len(cl) == 0 for cl in enc.clauses):
         return False, None
@@ -233,7 +237,8 @@ def solve_k(n, tts, k, timeout=None):
 def opt_multi(n, tts, kmax=15, timeout=None):
     """Smallest k such that a multi-output AIG for `tts` exists, by an ascending search from
     k = 0; None if no k <= kmax is SAT."""
-    tts = check_tables(n, tts)
+    n, tts = check_tables(n, tts)
+    kmax = check_size("kmax", kmax)
     if trivial_multi(n, tts):
         return 0
     for k in range(1, kmax + 1):

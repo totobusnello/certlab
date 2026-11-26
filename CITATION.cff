@@ -3,11 +3,12 @@ message: "If you use this software, please cite it as below, and cite the archiv
 title: "certlab: exact synthesis of small Boolean circuits by SAT, with DRAT-certified lower bounds"
 abstract: >-
   SAT encoders for exact synthesis of single-output Boolean functions in the AIG, XAG and MIG
-  bases (circuit and formula modes), a certification chain for single-output functions whose
-  lower bounds are UNSAT results with drat-trim-verified DRAT proofs, multi-output encoders in the
-  AIG and MIG bases (witnesses checked by an independent simulator; lower bounds are the SAT
-  solver's answers, not DRAT-certified), NPN canonicalisation for 4-input functions, and scripts
-  that regenerate published forced-reconvergence witnesses from scratch.
+  bases (circuit and formula modes) and of multi-output functions in the AIG and MIG bases. The
+  single-output certification workflow checks the DRAT proofs of its lower bounds with drat-trim;
+  certlab synth and multi-output optimization use the SAT solver's verdict for lower bounds; both
+  multi-output solve_k APIs independently simulate every decoded SAT witness. Also NPN
+  canonicalisation for 4-input functions, and scripts that regenerate published
+  forced-reconvergence witnesses from scratch.
 authors:
   - family-names: Busnello
     given-names: Luiz Antonio
@@ -52,3 +53,9 @@ references:
       - family-names: Busnello
         given-names: Luiz Antonio
     doi: 10.5281/zenodo.23329554
+  - type: data
+    title: "Exact majority-inverter graph size of SUM_5 and PAR_5: encoders, CNF hashes, DRAT records and checks"
+    authors:
+      - family-names: Busnello
+        given-names: Luiz Antonio
+    doi: 10.5281/zenodo.23382607

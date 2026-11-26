@@ -24,8 +24,9 @@
 #   2 -- usage error, missing file, or drat-trim absent
 #   3 -- NOT CONCLUDED: drat-trim hit its time limit (`s TIMEOUT`, rc=0). Neither verified nor refuted.
 #   4 -- CHECKER FAILED: drat-trim was killed (e.g. by the OOM killer), ran out of memory
-#        (`c MEMOUT`, no status line), printed no status line, or printed `s VERIFIED` with a
-#        non-zero exit. Neither verified nor refuted. Until this code existed, all of these were
+#        (`c MEMOUT`, no status line), printed no status line, printed `s VERIFIED` with a
+#        non-zero exit, or printed two status lines that disagree (since 0.2.0; before, the first
+#        matching line won). Neither verified nor refuted. Until this code existed, all of these were
 #        reported as exit 1, i.e. as a refutation of the proof; only `s NOT VERIFIED` says
 #        anything about the PROOF. (Same four-way reading as
 #        certlab.certify.zc_certify.drat_verify_detailed; tests/test_drat_verdict.py runs both on
@@ -54,6 +55,14 @@ command -v drat-trim >/dev/null 2>&1 || { echo "check_drat: drat-trim is not on 
 out="$(drat-trim "$cnf" "$drat" -t "${DRAT_TIMEOUT_S:-604800}" 2>&1)"; rc=$?
 norm="$(printf '%s' "$out" | tr '\r' '\n')"
 status="$(printf '%s\n' "$norm" | grep -E '^s +(NOT +)?VERIFIED[[:space:]]*$' | tail -1 | tr -s ' ' | sed 's/[[:space:]]*$//')"
+
+# Every status line, normalised. Two that disagree (e.g. `s VERIFIED` and `s TIMEOUT`) leave no
+# trustworthy reading: checker failure, the same rule as zc_certify.drat_verify_detailed.
+nstatus="$(printf '%s\n' "$norm" | sed 's/^[[:space:]]*//' | grep -E '^s +' | tr -s ' ' | sed 's/[[:space:]]*$//' | sort -u | grep -c .)"
+if [ "$nstatus" -gt 1 ]; then
+  echo "CHECKER FAILED  $(basename "$drat")  ($nstatus different status lines, drat-trim rc=$rc; neither verified nor refuted)"
+  exit 4
+fi
 
 if [ "$status" = "s VERIFIED" ] && [ "$rc" -eq 0 ]; then
   echo "VERIFIED  $(basename "$drat")  (drat-trim rc=0)"

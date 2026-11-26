@@ -130,6 +130,7 @@ def drat_verify_detailed(cnf, drat):
       s NOT VERIFIED           -> the proof is WRONG  (the only case that is NOT_VERIFIED)
       s VERIFIED    + rc != 0  -> verified and then died; does not count as evidence
       no `s ` line / signal    -> the checker was KILLED midway; it neither verified NOR refuted
+      two `s ` lines disagree  -> no trustworthy reading; a checker failure, as in check_drat.sh
 
     In one recorded run, four opt=9 classes came out NOT_VERIFIED through the last case: the
     re-certification ran in a process pool and the container's memory ceiling (about 60 GB,
@@ -142,10 +143,15 @@ def drat_verify_detailed(cnf, drat):
     t0 = time.time()
     v = subprocess.run(["drat-trim", cnf, drat, "-t", str(DRAT_T)], capture_output=True, text=True)
     lines = (v.stdout or "").replace("\r", "\n").split("\n")
+    statuses = sorted({" ".join(l.split()) for l in lines if l.strip().startswith("s ")})
     status = next((l.strip() for l in reversed(lines) if l.strip().startswith("s ")), "")
-    ok = status == "s VERIFIED" and v.returncode == 0
+    contradictory = len(statuses) > 1
+    ok = status == "s VERIFIED" and v.returncode == 0 and not contradictory
     rc = v.returncode
-    if ok:
+    if contradictory:
+        verdict = "CHECKER_FAILED_contradictory_status"
+        status = " / ".join(statuses)
+    elif ok:
         verdict = "VERIFIED"
     elif status == "s NOT VERIFIED":
         verdict = "NOT_VERIFIED"

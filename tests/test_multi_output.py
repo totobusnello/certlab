@@ -107,7 +107,8 @@ def test_an_iterator_of_tables_gives_the_same_answer_as_a_list():
     assert sat and S.check_multi("mig", 2, [6, 8], *circ)
 
 
-@pytest.mark.parametrize("n,tts", [(2, [24]), (2, [-1]), (2, [8, 16]), (0, [0]), (2, [])])
+@pytest.mark.parametrize("n,tts", [(2, [24]), (2, [-1]), (2, [8, 16]), (0, [2]), (-1, [0]),
+                                  (2, []), (2, [8.0]), (2, ["8"])])
 def test_tables_out_of_range_are_rejected(n, tts):
     # [24] has a bit above the 4 rows of n = 2: it used to be read as 8 (one AND gate).
     for call in (lambda: multi_aig.opt_multi(n, tts),
@@ -117,9 +118,66 @@ def test_tables_out_of_range_are_rejected(n, tts):
                  lambda: multi_mig.opt_multi_via_sat(n, tts),
                  lambda: multi_mig.solve_k(n, tts, 1),
                  lambda: multi_mig.trivial_multi(n, tts),
-                 lambda: multi_mig.MultiMIGEncoder(n, 1, tts)):
-        with pytest.raises(ValueError):
+                 lambda: multi_mig.MultiMIGEncoder(n, 1, tts),
+                 lambda: multi_aig.verify_multi(n, tts, [(1, 0, 2, 0)], [(3, False)] * len(tts)),
+                 lambda: multi_mig.verify_multi(n, tts, [(0, 0, 1, 0, 2, 0)], [(3, False)] * len(tts))):
+        with pytest.raises((ValueError, TypeError)):
             call()
+
+
+def test_zero_inputs_and_integer_like_tables_are_accepted():
+    # n = 0: one row, the constants 0 and 1, size 0 in both bases (as before the 0.2.0 review).
+    assert multi_mig.sum_tts(0) == [0]
+    for tts in ([0], [1], [0, 1], multi_mig.sum_tts(0)):
+        assert multi_aig.opt_multi(0, tts) == 0
+        assert multi_mig.opt_multi_via_sat(0, tts) == 0
+
+    class Index:
+        # an integer type that is not int (numpy.int64 behaves the same way): accepted through
+        # operator.index
+        def __init__(self, v):
+            self.v = v
+
+        def __index__(self):
+            return self.v
+    assert multi_aig.trivial_multi(Index(2), [Index(10)])
+    assert multi_mig.trivial_multi(2, [Index(10)])
+
+
+@pytest.mark.parametrize("call", [
+    lambda: multi_aig.solve_k(2, [10], -1),
+    lambda: multi_mig.solve_k(2, [10], -1),
+    lambda: multi_aig.opt_multi(2, [10], kmax=-1),
+    lambda: multi_mig.opt_multi_via_sat(2, [10], kmax=-1),
+    lambda: multi_aig.MultiAIGEncoder(2, -1, [10]),
+    lambda: multi_mig.MultiMIGEncoder(2, -1, [10]),
+])
+def test_negative_sizes_are_rejected_before_the_k0_shortcut(call):
+    # [10] is the literal x_1: the k = 0 shortcut would answer before a negative size was seen.
+    with pytest.raises(ValueError):
+        call()
+
+
+@needs_kissat
+@pytest.mark.parametrize("mod", [multi_aig, multi_mig])
+def test_solve_k_rejects_a_witness_the_independent_simulator_rejects(mod, monkeypatch):
+    # Guards the wiring of certlab.simulate.check_multi into the API: with the independent check
+    # forced to say no, a correct AND witness must raise, in the MIG with its default arguments too.
+    monkeypatch.setattr(mod, "check_multi", lambda *a, **kw: False)
+    with pytest.raises(RuntimeError, match="independent simulator"):
+        mod.solve_k(2, [8], 1)
+
+
+@needs_kissat
+def test_opt_multi_via_sat_still_accepts_verify_and_always_verifies(monkeypatch):
+    for v in (True, False):
+        with pytest.warns(DeprecationWarning):
+            assert multi_mig.opt_multi_via_sat(2, [6, 8], kmax=4, verify=v) == 3
+    with pytest.warns(DeprecationWarning):
+        assert multi_mig.opt_multi_via_sat(2, [6, 8], 4, None, False) == 3
+    monkeypatch.setattr(multi_mig, "check_multi", lambda *a, **kw: False)
+    with pytest.warns(DeprecationWarning), pytest.raises(RuntimeError, match="independent simulator"):
+        multi_mig.opt_multi_via_sat(2, [8], kmax=2, verify=False)
 
 
 @pytest.mark.parametrize("k,fence", [(1, ()), (2, (2, 0)), (2, (1, 0, 1)), (2, (3, -1)), (3, (1, 1))])

@@ -21,7 +21,7 @@ OTHER_PROBES = [n for n in D.PROBES if not n.startswith("solver_failure_")]
 def test_solver_failure_is_never_unsat(tmp_path, probe, mode, optimize):
     d = D.fake_kissat_dir(str(tmp_path), mode)
     out = D.run_probe(probe, D.IMPORTS_NEW, optimize, env_with_path_first(d, {"FAKEBIN": d}))
-    assert out.startswith("RAISED RuntimeError"), out
+    assert out.startswith(D.SOLVER_FAILURE_EXPECT[probe]), out
 
 
 @pytest.mark.parametrize("optimize", [False, True], ids=["python3", "python3-O"])
