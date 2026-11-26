@@ -7,8 +7,8 @@ status) and the class it must be read as:
     0 VERIFIED        the proof is correct
     1 NOT_VERIFIED    the proof is wrong (only `s NOT VERIFIED` says this)
     3 TIMEOUT         drat-trim's time limit: neither verified nor refuted
-    4 CHECKER_FAILED  killed / out of memory / no status line / VERIFIED with rc != 0:
-                      neither verified nor refuted
+    4 CHECKER_FAILED  killed / out of memory / no status line / VERIFIED with rc != 0 /
+                      two status lines that disagree: neither verified nor refuted
 
 The battery starts with the NEGATIVE cases (a proof that must NOT pass), because the historical
 defect was a check that passed every good proof and was never shown a bad one.
@@ -24,6 +24,13 @@ CASES = [
     ("killed_sigkill", "printf 'c parsing\\n'; kill -9 $$", 4),
     ("memout_no_status_line", "printf 'c MEMOUT\\n'; exit 0", 4),
     ("empty_output", "exit 0", 4),
+    # Two status lines that contradict each other: neither reading can be trusted, so both
+    # readers must call it a checker failure (before 0.2.0 the shell script read the first case as
+    # VERIFIED and the Python reader as TIMEOUT).
+    ("contradictory_verified_then_timeout", "printf 's VERIFIED\\ns TIMEOUT\\n'; exit 0", 4),
+    ("contradictory_timeout_then_verified", "printf 's TIMEOUT\\ns VERIFIED\\n'; exit 0", 4),
+    ("contradictory_not_verified_then_verified", "printf 's NOT VERIFIED\\ns VERIFIED\\n'; exit 0", 4),
+    ("contradictory_after_carriage_return", "printf 'c progress\\rs VERIFIED\\ns NOT VERIFIED\\n'; exit 0", 4),
     ("timeout_status", "printf 'c progress\\ns TIMEOUT\\n'; exit 0", 3),
     ("timeout_message_only", "printf 'c ERROR: time limit exceeded\\n'; exit 0", 3),
     ("verified_plain", "printf 'c 10 of 20 clauses in core\\ns VERIFIED\\nc verification time: 0.01 seconds\\n'; exit 0", 0),

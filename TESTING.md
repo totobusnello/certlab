@@ -251,8 +251,9 @@ multi-output path calls drat-trim yet), and a multi-output CLI.
 ### 4.1 Review fixes before release (2026-11-26)
 
 Two read-only reviews of the 0.2.0 candidate (models of two other families, under the author's
-direction) reported the defects below; each was reproduced before it was fixed, and each fix has a
-test that fails on the candidate and passes now.
+direction) reported the defects below; each was reproduced before it was fixed. The tests listed
+after the table fail on the candidate and pass now, except the wiring of the independent check
+into `solve_k`, which got its discriminating test only in 4.2.
 
 | defect in the candidate | where | fix |
 |---|---|---|
@@ -261,7 +262,7 @@ test that fails on the candidate and passes now.
 | `fence=()` was read as "no fence": `solve_k(2, [8], 1, fence=())` searched unrestricted and returned SAT; levels of size 0 were accepted | `multi_mig` | `None` means no fence; any other value must be an ordered partition of k into non-empty levels (`ValueError`) |
 | the verdict was read by substring over the whole output: a comment quoting `s UNSATISFIABLE` turned a SAT run into UNSAT (MIG), and exit code 10 was accepted without a status line (AIG) | both | exactly one status line (a line starting with `s `), agreeing with the exit code, else `RuntimeError` (`_multi_common.kissat_verdict`) |
 | `check_multi` validated the basis inside the gate loop, so with no gates it accepted `"xag"`; the encoders' `verify_multi` accepted more outputs than tables | `simulate`, both | basis checked first; `len(outs) == len(tts)` required |
-| SAT answers were checked only by each encoder's own simulator, and `multi_mig.solve_k` did not decode at all unless `return_circuit=True` | both | every SAT answer is decoded and checked by `verify_multi` and by the independent `certlab.simulate.check_multi` before it is reported; `return_circuit` only decides what is returned, and the `verify` argument of `opt_multi_via_sat` is removed |
+| SAT answers were checked only by each encoder's own simulator, and `multi_mig.solve_k` did not decode at all unless `return_circuit=True` | both | every SAT answer is decoded and checked by `verify_multi` and by the independent `certlab.simulate.check_multi` before it is reported; `return_circuit` only decides what is returned, and the `verify` argument of `opt_multi_via_sat` is removed (made a deprecated, ignored argument in 4.2) |
 
 Tests added or tightened:
 
@@ -276,7 +277,7 @@ Tests added or tightened:
 | `test_aig_audit_rows`, `test_mig_par5_is_six` | UNSAT at every k below the stated minimum, not only at k - 1: exact-k satisfiability is not monotone in k here, since every gate must be used |
 | `test_one_output_reproduces_single_output`, `test_f_and_not_f_cost_opt_f` | compared with fixed reference sizes (`REF_N3`) instead of only encoder against encoder |
 | probes `verdict_*_multi_aig`, `verdict_*_multi_mig` | fake kissat with a correct model: a comment quoting a status is ignored (SAT returned); a missing status line, two status lines, or a status that contradicts the exit code raise `RuntimeError` |
-| all probes | each probe now pins the exception type and the start of the guard's message (`defect_probes.EXPECT`), so an unrelated error in the call does not pass for the guard |
+| `bad_model_*`, `decode_*`, fence and the other non-solver probes | each pins the exception type and the start of the guard's message (`defect_probes.EXPECT`), so an unrelated error in the call does not pass for the guard (the `solver_failure_*` probes were pinned in 4.2) |
 
 Full run after the fixes, in a working copy (`python3 -m pytest -q --durations=8 tests`, then the
 same under `python3 -O`):
@@ -288,6 +289,43 @@ same under `python3 -O`):
 ```
 
 The one failure, in both runs, is `test_scrub_package_is_clean` reading the working copy's `.git`
-pointer file, which holds a local path and is not part of the package; on a `git archive` export
-of the commit the scan reports 0 findings and `tests/test_tools.py` passes.
+pointer file, which holds a local path and is not part of the package (in the `-O` run it also
+read the log of the first run, kept in the working copy); on a `git archive` export of the commit
+the scan reports 0 findings and `tests/test_tools.py` passes.
+
+### 4.2 Second review round (2026-11-26)
+
+A second read-only review of the fixed candidate reported the items below. Each defect was
+reproduced, and its test failed before the fix, except where the table says the test guards
+behaviour that was already right.
+
+| item | where | fix | test |
+|---|---|---|---|
+| two contradictory drat-trim status lines (`s VERIFIED` then `s TIMEOUT`, rc 0) read as VERIFIED by `check_drat.sh` and as TIMEOUT by the Python reader | both DRAT readers | contradictory status lines are a checker failure: exit 4 / `CHECKER_FAILED_contradictory_status` (CHANGELOG, "Changed contract") | four new cases in `tests/drat_battery.py`, run against `check_drat.sh`, `drat_verify_detailed` and `certlab check-drat` (`test_battery_all_readers_agree`) |
+| the table checks of 4.1 rejected n = 0 (`sum_tts(0)`, the constants `[0, 1]`, size 0 before) and integer types other than int | both encoders | n >= 0; tables through `operator.index`, width by `tt.bit_length() <= 2**n`; an empty output list still raises (declared in the CHANGELOG) | `test_zero_inputs_and_integer_like_tables_are_accepted`; `test_tables_out_of_range_are_rejected` extended (n = 0 with `[2]`, n = -1, floats, strings) |
+| a negative `k` or `kmax` could answer through the k = 0 shortcut (`solve_k(2, [10], -1)` SAT, `kmax=-1` gave 0) | both encoders | `k` and `kmax` must be >= 0, checked before the shortcut | `test_negative_sizes_are_rejected_before_the_k0_shortcut` |
+| `verify_multi` called directly accepted `[24]` at n = 2 | both encoders | it applies the same table checks | `test_tables_out_of_range_are_rejected` (the two `verify_multi` calls) |
+| nothing in the suite guarded the wiring of `check_multi` into `solve_k`: correct models pass either way, and the planted bad model is caught first by `verify_multi` | both encoders | (wiring already right) | `test_solve_k_rejects_a_witness_the_independent_simulator_rejects`: `check_multi` replaced by a function returning False, a correct AND witness must raise the specific `RuntimeError`, in the MIG with default arguments too |
+| the dangerous verdict, exit code 20 with a `s SATISFIABLE` line, was not a permanent probe | both encoders | (reader already right) | probes `verdict_sat_line_with_unsat_exit_code_multi_*` |
+| `solver_failure_*` probes accepted any `RuntimeError` | probes | (guards already right) | `defect_probes.SOLVER_FAILURE_EXPECT` pins the message |
+| `opt_multi_via_sat(..., verify=...)` raised `TypeError` after 4.1 | `multi_mig` | `verify` accepted, deprecated and ignored (`DeprecationWarning`); verification always on | `test_opt_multi_via_sat_still_accepts_verify_and_always_verifies` (keyword and positional; with `verify=False` and the independent check forced to fail, it still raises) |
+
+README, the `CITATION.cff` abstract and this file now say what each path checks: the single-output
+certification workflow checks DRAT proofs with drat-trim; `certlab synth` and multi-output
+optimization use the solver's verdict for lower bounds; both multi-output `solve_k` APIs
+independently simulate every decoded SAT witness. `CITATION.cff` lists
+10.5281/zenodo.23382607 among its references.
+
+Full run after the second round, in a working copy (`python3 -m pytest -q --durations=5 tests`,
+then the same under `python3 -O`):
+
+```
+1 failed, 180 passed in 494.29s (0:08:14)
+1 failed, 180 passed, 1 warning in 507.35s (0:08:27)     # python3 -O
+179.39s call     tests/test_multi_output.py::test_mig_par5_is_six
+```
+
+The one failure is again `test_scrub_package_is_clean` reading the working copy's `.git` pointer
+file (and, in the `-O` run, the log of the first run); on a `git archive` export of the commit the scan reports 0 findings and
+`tests/test_tools.py` passes.
 

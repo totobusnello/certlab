@@ -34,10 +34,11 @@ Library use:
 import subprocess
 import tempfile
 import os
+import warnings
 from itertools import combinations
 
 from certlab.simulate import check_multi
-from certlab.encoders._multi_common import check_tables, kissat_verdict
+from certlab.encoders._multi_common import check_size, check_tables, kissat_verdict
 
 
 def tt_bit(tt, t):
@@ -94,6 +95,8 @@ def levels_of(fence):
 
 class MultiMIGEncoder:
     def __init__(self, n, k, tts, fence=None, sym_inputs=None):
+        n, tts = check_tables(n, tts)
+        k = check_size("k", k)
         self.n, self.k = n, k
         # `fence=None` means no fence; any other value, the empty tuple included, is a fence and
         # must be an ordered partition of k into non-empty levels.
@@ -104,7 +107,7 @@ class MultiMIGEncoder:
         self.fence = fence
         # groups of mutually symmetric inputs, e.g. [[1,2,3,4,5]] for SUM_5
         self.sym_inputs = sym_inputs or []
-        self.tts = check_tables(n, tts)
+        self.tts = tts
         self.m = len(self.tts)
         self.rows = 1 << n
         self.nvars = 0
@@ -310,6 +313,7 @@ def simulate_multi(n, gates, outs, t):
 
 
 def verify_multi(n, tts, gates, outs):
+    n, tts = check_tables(n, tts)
     if len(outs) != len(tts):
         return False
     for t in range(1 << n):
@@ -322,7 +326,7 @@ def verify_multi(n, tts, gates, outs):
 
 def trivial_multi(n, tts):
     """Is k = 0 enough? Every output must be a constant or a +/- literal."""
-    tts = check_tables(n, tts)
+    n, tts = check_tables(n, tts)
     rows = 1 << n
     mask = (1 << rows) - 1
     cands = {0, mask}
@@ -341,7 +345,8 @@ def solve_k(n, tts, k, return_circuit=False, timeout=None,
     is always decoded and checked by verify_multi and by the independent
     certlab.simulate.check_multi; `return_circuit` only decides whether the circuit is returned.
     """
-    tts = check_tables(n, tts)
+    n, tts = check_tables(n, tts)
+    k = check_size("k", k)
     enc = MultiMIGEncoder(n, k, tts, fence=fence,
                           sym_inputs=sym_inputs).build()
     if any(len(cl) == 0 for cl in enc.clauses):
@@ -372,10 +377,17 @@ def solve_k(n, tts, k, return_circuit=False, timeout=None,
     return True, ((gates, outs) if return_circuit else None)
 
 
-def opt_multi_via_sat(n, tts, kmax=16, timeout=None):
+def opt_multi_via_sat(n, tts, kmax=16, timeout=None, verify=None):
     """Smallest k such that a multi-output MIG for `tts` exists, by an ascending search from
-    k = 0; None if no k <= kmax is SAT. Every SAT answer is decoded and checked (see solve_k)."""
-    tts = check_tables(n, tts)
+    k = 0; None if no k <= kmax is SAT. Every SAT answer is decoded and checked (see solve_k).
+
+    `verify` is deprecated and ignored: verification can no longer be turned off. It is accepted,
+    with a DeprecationWarning, so that calls written for the research script keep working."""
+    if verify is not None:
+        warnings.warn("opt_multi_via_sat: `verify` is ignored; every SAT answer is always "
+                      "decoded and checked", DeprecationWarning, stacklevel=2)
+    n, tts = check_tables(n, tts)
+    kmax = check_size("kmax", kmax)
     if trivial_multi(n, tts):
         return 0
     for k in range(1, kmax + 1):

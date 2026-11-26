@@ -154,6 +154,8 @@ _VERDICT_CASES = {
     "verdict_two_status_lines": [
         "echo 's SATISFIABLE'", "echo 's UNSATISFIABLE'", "echo 'MODEL'", "exit 10"],
     "verdict_disagrees_with_exit_code": ["echo 's UNSATISFIABLE'", "exit 10"],
+    # the dangerous direction: a SAT status line with the UNSAT exit code must not read as either
+    "verdict_sat_line_with_unsat_exit_code": ["echo 's SATISFIABLE'", "echo 'MODEL'", "exit 20"],
 }
 for _case, _lines in _VERDICT_CASES.items():
     for _b, _cls, _pred, _idx, _extra in (
@@ -215,8 +217,16 @@ EXPECT = {
 for _b in ("multi_aig", "multi_mig"):
     EXPECT[f"verdict_comment_is_not_a_status_line_{_b}"] = "RETURNED (True, ("
     for _case in ("verdict_status_line_missing", "verdict_two_status_lines",
-                  "verdict_disagrees_with_exit_code"):
+                  "verdict_disagrees_with_exit_code", "verdict_sat_line_with_unsat_exit_code"):
         EXPECT[f"{_case}_{_b}"] = "RAISED RuntimeError kissat gave no verdict"
+
+# The solver-failure probes (fake kissat with no verdict) pin the guard's message too.
+SOLVER_FAILURE_EXPECT = {
+    "solver_failure_xag": "RAISED RuntimeError kissat rc=",
+    "solver_failure_mig": "RAISED RuntimeError kissat rc=",
+    "solver_failure_multi_aig": "RAISED RuntimeError kissat gave no verdict",
+    "solver_failure_multi_mig": "RAISED RuntimeError kissat gave no verdict",
+}
 
 
 def run_probe(name, imports, optimize, env, cwd=None, timeout=600):

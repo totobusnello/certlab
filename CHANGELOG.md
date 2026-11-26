@@ -22,11 +22,25 @@ Phase 2, multi-output.
   in both multi-output encoders; `check_multi` rejects an unsupported basis even with no gates, and
   `verify_multi` requires one output per table. Every SAT answer of the multi-output encoders is
   decoded and checked by the independent `certlab.simulate.check_multi` before it is reported;
-  the `verify` argument of `opt_multi_via_sat` is removed.
+  the `verify` argument of `opt_multi_via_sat` is deprecated and ignored (DeprecationWarning):
+  verification is always on.
+- Input contract of the multi-output encoders: n >= 0 (n = 0 is one row, the constants 0 and 1,
+  size 0); tables are integers through `operator.index` (numpy integers pass) that fit in 2^n
+  rows; an empty list of outputs raises `ValueError`; a negative `k` or `kmax` raises
+  `ValueError`, before the k = 0 shortcut; `verify_multi` applies the same table checks.
 - Not included in this release: a multi-output XAG encoder, a command-line entry point for the
   multi-output encoders, and a DRAT-certified lower-bound path for them. Multi-output minimum
   sizes returned by `opt_multi` / `opt_multi_via_sat` rest on the solver's UNSAT answer, not on a
   checked proof.
+
+### Changed contract
+
+- DRAT verdict, in both readers (`scripts/check_drat.sh` and
+  `certlab.certify.zc_certify.drat_verify_detailed`, hence `certlab check-drat`): two status lines
+  that disagree (for example `s VERIFIED` and `s TIMEOUT`) are a checker failure, exit code 4 /
+  verdict `CHECKER_FAILED_contradictory_status`, neither verified nor refuted. In 0.1.0 the shell
+  script read the first matching line (`VERIFIED`, exit 0, for that example) and the Python reader
+  the last (`TIMEOUT`). The shared battery `tests/drat_battery.py` has the regression cases.
 
 ## 0.1.0 (2026-10-16)
 
